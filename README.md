@@ -5,3 +5,18 @@
 <p align="center">
     <img src="teaser.png" alt="Overview" height="600"/>
 </p>
+
+## Introduction
+CARDIAC-FM is a multimodal foundation model that integrates 12-lead electrocardiogram and cardiac magnetic resonance imaging data through contrastive learning. 
+## Environment
+
+## Inference
+
+## Finetuning
+
+## Training
+
+## License
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Citation
