@@ -143,7 +143,8 @@ def train_clip(args):
         print("\t Training loss ......",round(loss,4))
         print("\t Val loss ......", round(val_loss,4))
         print('\t Time per epoch (in mins) = ', round((time.time()-begin)/60,2),'\n\n')
-        log_metrics(epoch + 1, loss, val_loss, optimizer.param_groups[0]['lr'], loss_fn.temperature.exp().item())
+        if args.wandb:
+            log_metrics(epoch + 1, loss, val_loss, optimizer.param_groups[0]['lr'], loss_fn.temperature.exp().item())
 
         if val_loss <= best_val_loss:
             torch.save(model.state_dict(),os.path.join(save_path, 'model_epoch_{}.pth'.format(epoch)))
@@ -160,12 +161,14 @@ if __name__=="__main__":
     parser.add_argument('--save_path', type=str, default='', help='Path to save models')
     parser.add_argument('--pt_mri_path', type=str, default='', help='Path to pretrained MRI model')
     parser.add_argument('--pt_ecg_path', type=str, default='', help='Path to pretrained ECG model')
+    parser.add_argument('--wandb', action='store_true', help='Use wandb for logging')
 
     args = parser.parse_args()
-    wandb.init(
-        project="multi-modal-training",
-        name=f"Training-bs{args.batch_size}-lr{args.lr:g}-ep{args.epochs}"
-    )
+    if args.wandb:
+        wandb.init(
+            project="multi-modal-training",
+            name=f"Training-bs{args.batch_size}-lr{args.lr:g}-ep{args.epochs}"
+        )
     train_clip(args)
 
 # python stage1_CL.py --lr 1e-4 --epochs 20 --batch_size 32 
