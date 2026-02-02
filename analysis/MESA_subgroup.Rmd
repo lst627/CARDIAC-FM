@@ -1,0 +1,296 @@
+---
+title: "MESA_subgroup"
+author: "Fumin Li"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+MESA_info <- read.csv("/Users/fuminli/Desktop/ECG_MRI/Ting/MESA_Exam1_5_IS_HF_AF_Ting.csv")
+MESA_info <- MESA_info[, c(1, 2, 4, 18)]
+```
+
+
+```{r}
+MESA_true_pred <- read.csv("/Users/fuminli/Desktop/ECG_MRI/MESA/MESA_true_pred.csv")
+cols_keep <- !(
+  grepl("pred", colnames(MESA_true_pred)) &
+  !grepl("ECGstage1_RF", colnames(MESA_true_pred))
+)
+
+MESA_true_pred <- MESA_true_pred[, cols_keep]
+```
+
+```{r}
+visit1 <- MESA_info %>%
+  mutate(
+    idno_visit = paste0(idno, "_1"),
+    age = age1c,
+    gender = gender1
+  ) %>%
+  select(idno_visit, age, gender)
+
+visit5 <- MESA_info %>%
+  mutate(
+    idno_visit = paste0(idno, "_5"),
+    age = age5c,
+    gender = gender1
+  ) %>%
+  select(idno_visit, age, gender)
+
+MESA_info_expanded <- rbind(visit1, visit5)
+```
+
+```{r}
+MESA_merged <- merge(MESA_true_pred, MESA_info_expanded, by = "idno_visit", all.x = TRUE)
+MESA_merged <- MESA_merged[
+  , !names(MESA_merged) %in% c("X") &
+    !grepl("^(af3|hf3)", names(MESA_merged))
+]
+
+```
+
+```{r}
+for (v in 1:4) {
+
+  model0  <- read.csv(paste0(
+    "/Users/fuminli/Desktop/ECG_MRI/csv_train_valid_test_individual_temp/split",
+    v, "/MESA/CHARGE_PREVENT/test_af5_cardiacfm0.csv"
+  ))
+  model10 <- read.csv(paste0(
+    "/Users/fuminli/Desktop/ECG_MRI/csv_train_valid_test_individual_temp/split",
+    v, "/MESA/CHARGE_PREVENT/test_af5_cardiacfm10.csv"
+  ))
+  model20 <- read.csv(paste0(
+    "/Users/fuminli/Desktop/ECG_MRI/csv_train_valid_test_individual_temp/split",
+    v, "/MESA/CHARGE_PREVENT/test_af5_cardiacfm20.csv"
+  ))
+
+  idx <- which(!is.na(MESA_merged$af5_true))
+
+  col0  <- paste0("af5_ECGstage1_RF_0_pred",  v)
+  col10 <- paste0("af5_ECGstage1_RF_10_pred", v)
+  col20 <- paste0("af5_ECGstage1_RF_20_pred", v)
+
+  MESA_merged[idx, col0]  <- model0$y_pred
+  MESA_merged[idx, col10] <- model10$y_pred
+  MESA_merged[idx, col20] <- model20$y_pred
+}
+
+for (v in 1:4) {
+
+  model0  <- read.csv(paste0(
+    "/Users/fuminli/Desktop/ECG_MRI/csv_train_valid_test_individual_temp/split",
+    v, "/MESA/CHARGE_PREVENT/test_hf5_cardiacfm0.csv"
+  ))
+  model10 <- read.csv(paste0(
+    "/Users/fuminli/Desktop/ECG_MRI/csv_train_valid_test_individual_temp/split",
+    v, "/MESA/CHARGE_PREVENT/test_hf5_cardiacfm10.csv"
+  ))
+  model20 <- read.csv(paste0(
+    "/Users/fuminli/Desktop/ECG_MRI/csv_train_valid_test_individual_temp/split",
+    v, "/MESA/CHARGE_PREVENT/test_hf5_cardiacfm20.csv"
+  ))
+
+  idx <- which(!is.na(MESA_merged$hf5_true))
+
+  col0  <- paste0("hf5_ECGstage1_RF_0_pred",  v)
+  col10 <- paste0("hf5_ECGstage1_RF_10_pred", v)
+  col20 <- paste0("hf5_ECGstage1_RF_20_pred", v)
+
+  MESA_merged[idx, col0]  <- model0$y_pred
+  MESA_merged[idx, col10] <- model10$y_pred
+  MESA_merged[idx, col20] <- model20$y_pred
+}
+```
+
+
+```{r}
+library(pROC)
+library(dplyr)
+
+labels <- c("af5", "hf5")
+ratios <- c("0", "10", "20")
+sps <- 1:4
+
+summary_results <- data.frame()
+
+for (label in labels) {
+  true_col <- paste0(label, "_true")
+  
+  for (ratio in ratios) {
+    pred_cols <- paste0(label, "_ECGstage1_RF", "_", ratio, "_pred", sps)
+    
+    subgroups_list <- list(
+      overall = rep(TRUE, nrow(MESA_merged)),
+      age_lt_65 = MESA_merged$age < 65,
+      age_gt_65 = MESA_merged$age >= 65,
+      gender_0 = MESA_merged$gender == 0,
+      gender_1 = MESA_merged$gender == 1
+    )
+    
+    for (subgroup_name in names(subgroups_list)) {
+      subgroup_mask <- subgroups_list[[subgroup_name]]
+      
+      auc_results <- numeric(length(sps))
+      auprc_results <- numeric(length(sps))
+      
+      for (i in 1:length(sps)) {
+        df_temp <- MESA_merged[subgroup_mask, c(true_col, pred_cols[i])]
+        df_temp <- df_temp[complete.cases(df_temp), ]
+        
+        if (nrow(df_temp) == 0) {
+          auc_results[i] <- NA
+          auprc_results[i] <- NA
+          next
+        }
+        
+        roc_obj <- roc(df_temp[[1]], df_temp[[2]])
+        auc_results[i] <- auc(roc_obj)
+        
+        pr_curve <- pr.curve(scores.class0 = df_temp[[2]][df_temp[[1]] == 1],
+                            scores.class1 = df_temp[[2]][df_temp[[1]] == 0])
+        auprc_results[i] <- pr_curve$auc.integral
+      }
+      
+      auc_sd <- sd(auc_results, na.rm = TRUE)
+      auprc_sd <- sd(auprc_results, na.rm = TRUE)
+      
+      summary_results <- rbind(summary_results, 
+                              data.frame(
+                                model = "ECGstage1_downstream",
+                                label = label,
+                                subgroup = subgroup_name,
+                                ratio = ratio,
+                                AUROC_sd = auc_sd,
+                                AUPRC_sd = auprc_sd,
+                                AUROC = mean(auc_results, na.rm = TRUE),
+                                AUPRC = mean(auprc_results, na.rm = TRUE)
+                              ))
+    }
+  }
+}
+
+summary_results <- summary_results %>%
+  mutate(
+    AUROC_lower = AUROC - 1.96 * AUROC_sd / sqrt(4),
+    AUROC_upper = AUROC + 1.96 * AUROC_sd / sqrt(4),
+    AUPRC_lower = AUPRC - 1.96 * AUPRC_sd / sqrt(4),
+    AUPRC_upper = AUPRC + 1.96 * AUPRC_sd / sqrt(4)
+  )
+
+print(summary_results)
+```
+```{r}
+summary_results$model <- case_when(
+  summary_results$model == "ECGstage1_downstream" ~ "CARDIAC-FM(ECG)",
+  TRUE ~ summary_results$model
+)
+
+summary_results$label <- case_when(
+  summary_results$label == "af5" ~ "5-year AF",
+  summary_results$label == "hf5" ~ "5-year HF",
+  TRUE ~ summary_results$label
+)
+```
+
+
+```{r}
+summary_results$ratio <- factor(ifelse(summary_results$ratio == 0, "Zero-shot",
+                                 ifelse(summary_results$ratio == 10, "Few-shot(10%)",
+                                 ifelse(summary_results$ratio == 20, "Few-shot(20%)", 
+                                 summary_results$ratio))),
+                                 levels = c("Zero-shot", "Few-shot(10%)", "Few-shot(20%)"))
+```
+
+```{r}
+df_plot_af5 <- summary_results %>%
+  filter(label == "5-year AF") %>%
+    mutate(
+      subgroup = recode(subgroup,
+                        "age_lt_65" = "Age <65",
+                        "age_gt_65" = "Age ≥65",
+                        "gender_0" = "Female",
+                        "gender_1" = "Male",
+                        "overall" = "Overall"),
+      group_type = case_when(
+        grepl("Age", subgroup) ~ "Age",
+        grepl("Female|Male", subgroup) ~ "Sex",
+        subgroup == "Overall" ~ "Overall"
+      )
+    )
+
+df_plot_hf5 <- summary_results %>%
+  filter(label == "5-year HF") %>%
+    mutate(
+      subgroup = recode(subgroup,
+                        "age_lt_65" = "Age <65",
+                        "age_gt_65" = "Age ≥65",
+                        "gender_0" = "Female",
+                        "gender_1" = "Male",
+                        "overall" = "Overall"),
+      group_type = case_when(
+        grepl("Age", subgroup) ~ "Age",
+        grepl("Female|Male", subgroup) ~ "Sex",
+        subgroup == "Overall" ~ "Overall"
+      )
+    )
+```
+
+```{r}
+df_all <- dplyr::bind_rows(df_plot_af5, df_plot_hf5)
+```
+
+```{r}
+library(dplyr)
+library(ggplot2)
+
+df_plot <- df_all %>%
+  mutate(
+    label = case_when(
+      label %in% c("5-year AF") ~ "Atrial Fibrillation",
+      label %in% c("5-year HF") ~ "Heart Failure",
+      TRUE ~ subgroup
+    ),
+    subgroup = factor(subgroup, levels = c("Overall", "Male", "Female", "Age ≥65", "Age <65")),
+    ratio = factor(ratio, levels = c("Zero-shot", "Few-shot(10%)", "Few-shot(20%)"))
+  )
+
+ggplot(df_plot, aes(x = AUROC, y = subgroup, color = ratio, shape = ratio)) +
+  geom_errorbarh(
+    aes(xmin = AUROC_lower, xmax = AUROC_upper),
+    position = position_dodge(width = 0.6),
+    height = 0.2,
+    linewidth = 0.5
+  ) +
+  geom_point(position = position_dodge(width = 0.6), size = 2) +
+  facet_wrap(~label, nrow = 1) +
+  scale_shape_manual(values = c(15, 16, 17)) +
+  scale_color_manual(values = c("#D55E00", "#009E73", "#0072B2")) +
+  coord_cartesian(xlim = c(0.55, 0.95)) +
+  labs(x = "AUROC", y = "Subgroup", color = NULL, shape = NULL) +
+  theme_bw(base_size = 16) +
+  theme(
+    axis.title.x = element_text(size = 15, face = "bold"),
+    axis.title.y = element_text(size = 15, face = "bold"),
+    axis.text.x  = element_text(size = 12, face = "bold"),
+    axis.text.y  = element_text(size = 12, face = "bold"),
+    strip.text   = element_text(size = 15, face = "bold"),
+    legend.text  = element_text(size = 15, face = "bold"),
+    legend.position = "bottom",
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor = element_blank()
+  )
+
+```
+
+```{r}
+write.csv(df_plot_af5, "/Users/fuminli/Desktop/ECG_MRI/result_table/MESA_subgroup_af5.csv", row.names = FALSE)
+write.csv(df_plot_hf5, "/Users/fuminli/Desktop/ECG_MRI/result_table/MESA_subgroup_hf5.csv", row.names = FALSE)
+```
+
+

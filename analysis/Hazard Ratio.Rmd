@@ -1,0 +1,449 @@
+---
+title: "HR"
+author: "Fumin Li"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(dplyr)
+library(ggplot2)
+```
+
+
+```{r}
+ecg <- read.csv("/Users/fuminli/Desktop/ECG_MRI/csv_HR/ecg.csv")
+ecgmri <- read.csv("/Users/fuminli/Desktop/ECG_MRI/csv_HR/ecgmri.csv")
+ecg <- ecg %>% dplyr::filter(eid_visit %in% ecgmri$eid_visit)
+```
+
+
+```{r}
+path <- "/Users/fuminli/Desktop/ECG_MRI/csv_train_valid_test_individual_id_disease"
+
+ecgmrirf_splits <- lapply(1:4, function(i) {
+  read.csv(file.path(path, paste0("charge_prevent_cardiacfm_ecgmri_UKBB_split", i, ".csv")))
+})
+
+
+ecgrf_splits <- lapply(1:4, function(i) {
+  df <- read.csv(file.path(path, paste0("charge_prevent_cardiacfm_UKBB_split", i, ".csv")))
+  df %>% filter(eid_visit %in% ecg$eid_visit)
+})
+
+rf_splits <- lapply(1:4, function(i) {
+  df <- read.csv(file.path(path, paste0("charge_prevent_UKBB_split", i, ".csv")))
+  df %>% filter(eid_visit %in% ecg$eid_visit)
+})
+
+
+```
+
+
+
+```{r}
+rf <- rf_splits[[1]]
+rf$af5_pred <- rowMeans(
+  cbind(
+    rf_splits[[1]]$af5_pred,
+    rf_splits[[2]]$af5_pred,
+    rf_splits[[3]]$af5_pred,
+    rf_splits[[4]]$af5_pred
+  ),
+)
+
+rf$hf5_pred <- rowMeans(
+  cbind(
+    rf_splits[[1]]$hf5_pred,
+    rf_splits[[2]]$hf5_pred,
+    rf_splits[[3]]$hf5_pred,
+    rf_splits[[4]]$hf5_pred
+  ),
+)
+
+ecgrf <- ecgrf_splits[[1]]
+ecgrf$af5_pred <- rowMeans(
+  cbind(
+    ecgrf_splits[[1]]$af5_pred,
+    ecgrf_splits[[2]]$af5_pred,
+    ecgrf_splits[[3]]$af5_pred,
+    ecgrf_splits[[4]]$af5_pred
+  ),
+)
+ecgrf$hf5_pred <- rowMeans(
+  cbind(
+    ecgrf_splits[[1]]$hf5_pred,
+    ecgrf_splits[[2]]$hf5_pred,
+    ecgrf_splits[[3]]$hf5_pred,
+    ecgrf_splits[[4]]$hf5_pred
+  ),
+)
+ecgmrirf <- ecgmrirf_splits[[1]]
+ecgmrirf$af5_pred <- rowMeans(
+  cbind(
+    ecgmrirf_splits[[1]]$af5_pred,
+    ecgmrirf_splits[[2]]$af5_pred,
+    ecgmrirf_splits[[3]]$af5_pred,
+    ecgmrirf_splits[[4]]$af5_pred
+  ),
+)
+ecgmrirf$hf5_pred <- rowMeans(
+  cbind(
+    ecgmrirf_splits[[1]]$hf5_pred,
+    ecgmrirf_splits[[2]]$hf5_pred,
+    ecgmrirf_splits[[3]]$hf5_pred,
+    ecgmrirf_splits[[4]]$hf5_pred
+  ),
+)
+```
+
+```{r}
+model_cols <- c("af5_pred", "hf5_pred")
+```
+
+
+```{r}
+add_qt <- function(df, cols) {
+  out <- df
+  for (nm in cols) {
+    x <- df[[nm]]
+    qs <- quantile(x, probs = c(1/3, 2/3), na.rm = TRUE)
+    out[[paste0(nm, "_qt")]] <- dplyr::case_when(
+      is.na(x) ~ NA_character_,
+      x <= qs[1] ~ "low",
+      x <= qs[2] ~ "intermediate",
+      TRUE ~ "high"
+    )
+  }
+  out
+}
+```
+
+```{r}
+model_cols <- c("af5_pred", "hf5_pred")
+
+rf <- add_qt(rf, model_cols)
+ecgrf <- add_qt(ecgrf, model_cols)
+ecgmrirf <- add_qt(ecgmrirf, model_cols)
+```
+
+```{r}
+ecg_outcome_df <- ecg[, c("eid_visit",
+                      "prevaf","ttoaf","afcens",
+                      "prevhf","ttohf","hfcens")]
+ecgmri_outcome_df <- ecgmri[, c("eid_visit",
+                      "prevaf","ttoaf","afcens",
+                      "prevhf","ttohf","hfcens")]
+rf_outcome <- merge(rf, ecg_outcome_df, by = "eid_visit", all = FALSE)
+ecgrf_outcome <- merge(ecgrf, ecg_outcome_df, by = "eid_visit", all = FALSE)
+ecgmrirf_outcome <- merge(ecgmrirf, ecgmri_outcome_df, by = "eid_visit", all = FALSE)
+```
+
+```{r}
+AF_models <- c("af5_pred_qt")
+HF_models <- c("hf5_pred_qt")
+
+AF_outcomes <- c("af")
+HF_outcomes <- c("hf")
+
+fit_one <- function(df, model_col, outcome_base) {
+  time_var <- paste0("tto", outcome_base)
+  event_var <- paste0(outcome_base, "cens")
+  prev_var  <- paste0("prev", outcome_base)
+  
+  dat <- df %>% 
+    filter(.data[[prev_var]] == 0,
+           !is.na(.data[[time_var]]),
+           !is.na(.data[[event_var]]),
+           !is.na(.data[[model_col]]))
+  
+  dat[[model_col]] <- factor(dat[[model_col]], 
+                             levels = c("low","intermediate","high"))
+  
+  f <- as.formula(paste0("Surv(", time_var, ", ", event_var, "==1) ~ ", model_col))
+  fit <- coxph(f, data = dat)
+  s <- summary(fit)
+  
+  tibble(
+    model   = model_col,
+    outcome = outcome_base,
+    level   = c("intermediate","high"),
+    logHR   = s$coefficients[, "coef"],
+    HR      = s$coefficients[, "exp(coef)"],
+    SE      = s$coefficients[, "se(coef)"]
+  )
+}
+
+run_for_dataset <- function(df, split_name) {
+  af_res <- do.call(rbind,
+                    lapply(AF_models, function(m)
+                      do.call(rbind,
+                              lapply(AF_outcomes, function(o)
+                                fit_one(df, m, o)))))
+  
+  hf_res <- do.call(rbind,
+                    lapply(HF_models, function(m)
+                      do.call(rbind,
+                              lapply(HF_outcomes, function(o)
+                                fit_one(df, m, o)))))
+  
+  res <- bind_rows(af_res, hf_res) %>% 
+    mutate(split = split_name) %>%
+    mutate(
+      HR    = exp(logHR),
+      lower = exp(logHR - 1.96 * SE),
+      upper = exp(logHR + 1.96 * SE)
+    )
+  
+  return(res)
+}
+```
+
+```{r}
+rf_result <- run_for_dataset(rf_outcome, "Risk Score")
+ecgrf_result <- run_for_dataset(ecgrf_outcome, "ECG + Risk Score")
+ecgmrirf_result <- run_for_dataset(ecgmrirf_outcome, "ECG + MRI + Risk Score")
+combined_result <- rbind(rf_result, ecgrf_result, ecgmrirf_result)
+```
+
+```{r}
+df <- combined_result %>% 
+  filter(str_detect(model, "_pred_qt")) %>%
+  mutate(
+    model_group = factor(split, levels=c("Risk Score","ECG + Risk Score","ECG + MRI + Risk Score")),
+    term = factor(level, levels=c("intermediate","high"), labels=c("Intermediate/Low","High/Low")),
+    prefix = toupper(str_extract(model, "^[a-z]+")),
+    score_num = str_extract(model, "(?<=[a-z])[0-9]+"),
+    score = paste0(prefix, score_num),
+    label = toupper(outcome),
+    panel = paste0(label, " (", score, " model)")
+  )
+
+df$panel <- factor(df$panel, 
+                        levels = c("AF (AF5 model)", "HF (HF5 model)"))
+
+df <- df %>%
+  filter(score %in% c("AF5", "HF5")) %>%
+  mutate(panel = case_when(
+    panel == "AF (AF5 model)" ~ "Atrial Fibrillation",
+    panel == "HF (HF5 model)" ~ "Heart Failure",
+    TRUE ~ panel
+  ))
+```
+
+
+```{r}
+ggplot(df, aes(x = model_group, y = HR, colour = term)) +
+  geom_point(position = position_dodge(width = 0.4), size = 1) +
+  geom_hline(yintercept = 1, color = "black", linewidth = 0.4, linetype = "dashed") +
+  geom_errorbar(aes(ymin = lower, ymax = upper),
+                width = 0.3,
+                position = position_dodge(width = 0.4)) +
+  facet_wrap(~ panel, ncol = 3) +
+  theme_bw(base_size = 10) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 10, face="bold"),
+    axis.text.y = element_text(face="bold",size = 8),
+    strip.text = element_text(face="bold", size=9),
+    axis.title = element_text(face="bold", size=12),
+    legend.title = element_blank(),
+    legend.text = element_text(face="bold", size=9)
+  ) +
+  labs(
+    title = "Risk stratification by CARDIAC-FM in UK Biobank",
+    x = NULL,
+    y = "Hazard Ratio (vs. low)"
+  )
+```
+
+
+```{r}
+write.csv(df, "/Users/fuminli/Desktop/ECG_MRI/result_table/UKBB_HR.csv", row.names = FALSE)
+```
+
+####### HR for CMR feature
+
+```{r}
+path <- "/Users/fuminli/Desktop/ECG_MRI/csv_train_valid_test_individual_id_disease/"
+
+cmr_features <- lapply(1:4, function(i) {
+  df <- read.csv(file.path(path, paste0("ECGstage1_UKBB_continuous_split", i, ".csv")))
+  df %>% filter(eid_visit %in% ecg$eid_visit)
+})
+
+rf <- lapply(1:4, function(i) {
+  read.csv(paste0("/Users/fuminli/Desktop/ECG_MRI/risk_factors_UKBB/risk_factor_", i, ".csv")) 
+})
+```
+
+
+```{r}
+label_names <- c("lvef", "laef", "lvm", "lvedv", "lvesv", "lavmin", "lavmax")
+
+cmr_avg <- cmr_features[[1]]
+
+for (lab in label_names) {
+  true_cols <- sapply(cmr_features, function(df) df[[lab]])
+  pred_cols <- sapply(cmr_features, function(df) df[[paste0(lab, "_pred")]])
+  
+  cmr_avg[[lab]] <- rowMeans(true_cols, na.rm = FALSE)
+  cmr_avg[[paste0(lab, "_pred")]] <- rowMeans(pred_cols, na.rm = FALSE)
+}
+```
+
+
+```{r}
+keys <- ecg$eid_visit
+rf_sub <- lapply(rf, function(df) {
+  df2 <- df[df$eid_visit %in% keys, ]
+  df2[match(keys, df2$eid_visit), ]
+})
+
+rf_sub <- lapply(rf_sub, function(df) {
+  rownames(df) <- NULL
+  df
+})
+```
+
+
+```{r}
+library(dplyr)
+library(survival)
+
+cmr_keep <- c("eid_visit","agecmr","sex","idx")
+cmr_vars <- setdiff(names(cmr_features[[1]]), cmr_keep)
+rf_vars  <- setdiff(names(rf_sub[[1]]), "eid_visit")
+
+outcomes <- list(
+  AF = list(time = "ttoaf", event = "afcens"),
+  HF = list(time = "ttohf", event = "hfcens")
+)
+
+all_imps <- lapply(1:4, function(i) {
+  cmr_z <- cmr_avg
+  cmr_z[setdiff(names(cmr_z), cmr_keep)] <- scale(cmr_z[setdiff(names(cmr_z), cmr_keep)])
+  print(cmr_z)
+  
+  rf_z <- rf_sub[[i]]
+  rf_z[setdiff(names(rf_z), "eid_visit")] <- scale(rf_z[setdiff(names(rf_z), "eid_visit")])
+  
+  dat_i <- ecg %>%
+    inner_join(cmr_z, by = "eid_visit") %>%
+    inner_join(rf_z, by = "eid_visit")
+  
+  res_i <- lapply(names(outcomes), function(out) {
+    time_var <- outcomes[[out]]$time
+    event_var <- outcomes[[out]]$event
+    
+    lapply(cmr_vars, function(v) {
+      fml <- as.formula(paste0("Surv(", time_var, ", ", event_var, ") ~ ",
+                               v, " + ", paste(rf_vars, collapse = " + ")))
+      fit <- coxph(fml, data = dat_i)
+      s <- summary(fit)$coefficients[v, ]
+      data.frame(
+        imp = i,
+        outcome = out,
+        feature = v,
+        type = ifelse(grepl("_pred$", v), "predicted", "true"),
+        beta = unname(s["coef"]),
+        var = unname(s["se(coef)"])^2,
+        row.names = NULL
+      )
+    }) %>% bind_rows()
+  }) %>% bind_rows()
+  
+  res_i
+}) %>% bind_rows()
+
+cox_pooled <- all_imps %>%
+  group_by(outcome, feature, type) %>%
+  summarise(
+    m = n(),
+    beta_bar = mean(beta),
+    W = mean(var),
+    B = var(beta),
+    Tvar = W + (1 + 1/m) * B,
+    HR = exp(beta_bar),
+    HR_low = exp(beta_bar - 1.96 * sqrt(Tvar)),
+    HR_high = exp(beta_bar + 1.96 * sqrt(Tvar)),
+    se_total = sqrt(Tvar),
+    z = beta_bar / se_total,
+    p = 2 * pnorm(-abs(z)),
+    .groups = "drop"
+  )
+```
+
+
+```{r}
+feat_base_order <- c("laef","lavmax","lavmin","lvedv","lvesv","lvm","lvef")
+
+plotdata <- cox_pooled %>%
+  filter(sub("_pred$", "", feature) %in% feat_base_order) %>%
+  mutate(
+    feature_base = factor(sub("_pred$", "", feature), levels = feat_base_order),
+    outcome = factor(outcome, levels = c("AF","HF","IS")),
+    type = factor(type, levels = c("true","predicted"),
+                  labels = c("True", "Predicted"))
+  )
+```
+
+
+```{r}
+plotdata$feature_base <- recode(plotdata$feature_base,
+                       "lvef" = "LVEF",
+                       "laef" = "LAEF",
+                       "lvedv" = "LVEDV",
+                       "lvesv" = "LVESV",
+                       "lvm" = "LVM",
+                       "lavmin" = "LAVmin",
+                       "lavmax" = "LAVmax")
+
+plotdata$type <- recode(plotdata$type,
+                       "True" = "MRI-measured",
+                       "Predicted" = "ECG-predicted")
+
+plotdata$outcome <- recode(plotdata$outcome,
+                       "AF" = "Atrial fibrillation",
+                       "HF" = "Heart failure")
+
+```
+
+
+```{r}
+p <- ggplot(plotdata, aes(x = feature_base, y = HR, color = type)) +
+  geom_point(position = position_dodge(width = 0.6), size = 1) +
+  geom_errorbar(aes(ymin = HR_low, ymax = HR_high),
+                position = position_dodge(width = 0.6), width = 0.2) +
+  facet_grid(outcome ~ ., scales = "fixed") +
+  scale_y_continuous(limits = c(0, 3)) +
+  scale_color_manual(values = c("MRI-measured" = "#E76F51", "ECG-predicted" = "#2A9D8F")) +
+  theme_bw(base_size = 18) +
+  theme(
+    strip.background = element_rect(fill = "grey70"),
+    strip.text = element_text(face = "bold", size = 12),
+    axis.text.x = element_text(angle = 45, hjust = 1, face = "bold", size = 12),
+    axis.text.y = element_text(face = "bold", size = 12),
+    axis.title.y = element_text(face = "bold", size = 14),
+    axis.title.x = element_blank(),
+    plot.title = element_text(face = "bold", size = 15, hjust = 0.5),
+    legend.title = element_blank(),
+    legend.position = "bottom",
+    legend.text = element_text(size = 12, face = "bold")
+  ) +
+  labs(title = "", y = "Hazard Ratios(95% CI)")
+```
+
+```{r}
+ggsave("/Users/fuminli/Desktop/ECG_MRI/cmr_hr_plot_ukbb.png", p, width = 7, height = 5, dpi = 300)
+
+```
+
+```{r}
+write.csv(plotdata, "/Users/fuminli/Desktop/ECG_MRI/result_table/UKBB_HR_CMR.csv", row.names = FALSE)
+```
+
+

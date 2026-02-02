@@ -1,0 +1,686 @@
+---
+title: "Hazard Ratio CHS"
+author: "Fumin Li"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r}
+library(survival)
+library(dplyr)
+
+CHS_template <- read.csv("/Users/fuminli/Desktop/ECG_MRI/csv_train_valid_test_individual_id_disease/CHS_split1.csv")
+```
+
+```{r}
+labels <- c("af5", "hf5")
+models <- c("", "cardiacfm")
+suffixes <- c("0", "10", "20")
+
+read_split <- function(split_num) {
+  base <- paste0("/Users/fuminli/Desktop/ECG_MRI/csv_train_valid_test_individual_temp/split",
+                 split_num, "/CHS/CHARGE_PREVENT")
+  out <- list()
+  
+  for (lb in labels) {
+    for (md in models) {
+      for (suf in suffixes) {
+        if (md == "") {
+          fname <- paste0("test_", lb, ".csv")
+          key <- paste0(lb, "_", suf)
+        } else {
+          fname <- paste0("test_", lb, "_", md, suf, ".csv")
+          key <- paste0(lb, "_ECGstage1_RF_", suf)
+        }
+        fpath <- file.path(base, fname)
+        if (file.exists(fpath)) {
+          out[[key]] <- read.csv(fpath)
+        }
+      }
+    }
+  }
+  out
+}
+
+tables_split1 <- read_split(1)
+tables_split2 <- read_split(2)
+tables_split3 <- read_split(3)
+tables_split4 <- read_split(4)
+```
+
+
+
+```{r}
+fill_CHS <- function(template, tables_split) {
+  out <- template
+  
+  for (nm in names(tables_split)) {
+    mask <- !is.na(template[[nm]])
+    vals <- tables_split[[nm]]$y_pred
+    out[[nm]][mask] <- vals
+  }
+  
+  out
+}
+
+CHS1 <- fill_CHS(CHS_template, tables_split1)
+CHS2 <- fill_CHS(CHS_template, tables_split2)
+CHS3 <- fill_CHS(CHS_template, tables_split3)
+CHS4 <- fill_CHS(CHS_template, tables_split4)
+```
+
+```{r}
+base <- "/Users/fuminli/Desktop/ECG_MRI/risk_factor_CHS"
+risk_list <- lapply(1:4, function(i) {
+  read.csv(file.path(base, paste0("risk_factor_", i, ".csv")))
+})
+names(risk_list) <- paste0("risk", 1:4)
+```
+
+
+
+```{r}
+CHS1 <- CHS1 %>% left_join(risk_list$risk1, by = "id")
+CHS2 <- CHS2 %>% left_join(risk_list$risk2, by = "id")
+CHS3 <- CHS3 %>% left_join(risk_list$risk3, by = "id")
+CHS4 <- CHS4 %>% left_join(risk_list$risk4, by = "id")
+
+
+```
+
+```{r}
+colnames(CHS1)[2:25] <- paste0(colnames(CHS1)[2:25], "_pred")
+colnames(CHS2)[2:25] <- paste0(colnames(CHS2)[2:25], "_pred")
+colnames(CHS3)[2:25] <- paste0(colnames(CHS3)[2:25], "_pred")
+colnames(CHS4)[2:25] <- paste0(colnames(CHS4)[2:25], "_pred")
+```
+
+```{r}
+common_cols <- names(CHS1)[!grepl("pred$", names(CHS1))]
+
+CHS_HR <- CHS1[, common_cols, drop = FALSE]
+
+pred_cols <- grep("pred$", names(CHS1), value = TRUE)
+
+for(col in pred_cols) {
+  col_data <- cbind(CHS1[[col]], CHS2[[col]], 
+                    CHS3[[col]], CHS4[[col]])
+  
+  CHS_HR[[col]] <- rowMeans(col_data, na.rm = FALSE)
+}
+CHS_HR <- CHS_HR[, names(CHS1)]
+```
+
+```{r}
+model_cols <- c(
+  "af3_0_pred","af3_10_pred","af3_20_pred",
+  "af3_ECGstage1_RF_0_pred","af3_ECGstage1_RF_10_pred","af3_ECGstage1_RF_20_pred",
+  "af5_0_pred","af5_10_pred","af5_20_pred",
+  "af5_ECGstage1_RF_0_pred","af5_ECGstage1_RF_10_pred","af5_ECGstage1_RF_20_pred",
+  "hf3_0_pred","hf3_10_pred","hf3_20_pred",
+  "hf3_ECGstage1_RF_0_pred","hf3_ECGstage1_RF_10_pred","hf3_ECGstage1_RF_20_pred",
+  "hf5_0_pred","hf5_10_pred","hf5_20_pred",
+  "hf5_ECGstage1_RF_0_pred","hf5_ECGstage1_RF_10_pred","hf5_ECGstage1_RF_20_pred"
+)
+```
+
+```{r}
+add_qt <- function(df, cols) {
+  out <- df
+  for (nm in cols) {
+    x <- df[[nm]]
+    qs <- quantile(x, probs = c(1/3, 2/3), na.rm = TRUE)
+    out[[paste0(nm, "_qt")]] <- dplyr::case_when(
+      is.na(x) ~ NA_character_,
+      x <= qs[1] ~ "low",
+      x <= qs[2] ~ "intermediate",
+      TRUE ~ "high"
+    )
+  }
+  out
+}
+```
+
+```{r}
+CHS <- add_qt(CHS_HR, model_cols)
+```
+
+```{r}
+AF_models <- c(
+  "af3_0_pred_qt","af3_10_pred_qt","af3_20_pred_qt",
+  "af3_ECGstage1_RF_0_pred_qt","af3_ECGstage1_RF_10_pred_qt","af3_ECGstage1_RF_20_pred_qt",
+  "af5_0_pred_qt","af5_10_pred_qt","af5_20_pred_qt",
+  "af5_ECGstage1_RF_0_pred_qt","af5_ECGstage1_RF_10_pred_qt","af5_ECGstage1_RF_20_pred_qt"
+)
+
+HF_models <- c(
+  "hf3_0_pred_qt","hf3_10_pred_qt","hf3_20_pred_qt",
+  "hf3_ECGstage1_RF_0_pred_qt","hf3_ECGstage1_RF_10_pred_qt","hf3_ECGstage1_RF_20_pred_qt",
+  "hf5_0_pred_qt","hf5_10_pred_qt","hf5_20_pred_qt",
+  "hf5_ECGstage1_RF_0_pred_qt","hf5_ECGstage1_RF_10_pred_qt","hf5_ECGstage1_RF_20_pred_qt"
+)
+
+AF_outcomes <- c("af")
+HF_outcomes <- c("hf","hfpef","hfref")
+
+fit_one <- function(df, model_col, outcome_base) {
+  time_var <- paste0("tto", outcome_base)
+  event_var <- paste0("inc", outcome_base)
+  prev_var  <- paste0("prev", outcome_base)
+  
+  dat <- df %>% 
+    filter(.data[[prev_var]] == 0,
+           !is.na(.data[[time_var]]),
+           !is.na(.data[[event_var]]),
+           !is.na(.data[[model_col]]))
+  
+  dat[[model_col]] <- factor(dat[[model_col]], 
+                             levels = c("low","intermediate","high"))
+  
+  f <- as.formula(paste0("Surv(", time_var, ", ", event_var, "==1) ~ ", model_col))
+  fit <- coxph(f, data = dat)
+  s <- summary(fit)
+  
+  tibble(
+    model   = model_col,
+    outcome = outcome_base,
+    level   = c("intermediate","high"),
+    logHR   = s$coefficients[, "coef"],
+    HR      = s$coefficients[, "exp(coef)"],
+    SE      = s$coefficients[, "se(coef)"]
+  )
+}
+
+run_for_dataset <- function(df, split_name) {
+  af_res <- do.call(rbind,
+                    lapply(AF_models, function(m)
+                      do.call(rbind,
+                              lapply(AF_outcomes, function(o)
+                                fit_one(df, m, o)))))
+  
+  hf_res <- do.call(rbind,
+                    lapply(HF_models, function(m)
+                      do.call(rbind,
+                              lapply(HF_outcomes, function(o)
+                                fit_one(df, m, o)))))
+  
+  res <- bind_rows(af_res, hf_res) %>% 
+    mutate(split = split_name) %>%
+    mutate(
+      HR    = exp(logHR),
+      lower = exp(logHR - 1.96 * SE),
+      upper = exp(logHR + 1.96 * SE)
+    )
+  
+  return(res)
+}
+
+res_CHS <- run_for_dataset(CHS, "CHS")
+```
+
+
+```{r}
+df0 <- res_CHS %>% 
+  filter(str_detect(model, "_0_pred_qt")) %>%
+  mutate(
+    model_group = if_else(str_detect(model, "ECGstage1"), "ECG+RF", "RF"),
+    model_group = factor(model_group, levels=c("RF","ECG+RF")),
+    term = factor(level, levels=c("intermediate","high"), labels=c("Intermediate/Low","High/Low")),
+    prefix = toupper(str_extract(model, "^[a-z]+")),
+    score_num = str_extract(model, "(?<=[a-z])[0-9]+"),
+    score = paste0(prefix, score_num),
+    label = toupper(outcome),
+    panel = paste0(label, " (", score, " score)")
+  )
+
+df10 <- res_CHS %>% 
+  filter(str_detect(model, "_10_pred_qt")) %>%
+  mutate(
+    model_group = if_else(str_detect(model, "ECGstage1"), "ECG+RF", "RF"),
+    model_group = factor(model_group, levels=c("RF","ECG+RF")),
+    term = factor(level, levels=c("intermediate","high"), labels=c("Intermediate/Low","High/Low")),
+    prefix = toupper(str_extract(model, "^[a-z]+")),
+    score_num = str_extract(model, "(?<=[a-z])[0-9]+"),
+    score = paste0(prefix, score_num),
+    label = toupper(outcome),
+    panel = paste0(label, " (", score, " score)")
+  )
+
+df20 <- res_CHS %>% 
+  filter(str_detect(model, "_20_pred_qt")) %>%
+  mutate(
+    model_group = if_else(str_detect(model, "ECGstage1"), "ECG+RF", "RF"),
+    model_group = factor(model_group, levels=c("RF","ECG+RF")),
+    term = factor(level, levels=c("intermediate","high"), labels=c("Intermediate/Low","High/Low")),
+    prefix = toupper(str_extract(model, "^[a-z]+")),
+    score_num = str_extract(model, "(?<=[a-z])[0-9]+"),
+    score = paste0(prefix, score_num),
+    label = toupper(outcome),
+    panel = paste0(label, " (", score, " score)")
+  )
+```
+
+```{r}
+df0$model_group <- recode(df0$model_group,
+                                "RF" = "Risk Score",
+                                "ECG+RF" = "ECG + Risk Score")
+
+df10$model_group <- recode(df10$model_group,
+                                "RF" = "Risk Score",
+                                "ECG+RF" = "ECG + Risk Score")
+
+df20$model_group <- recode(df20$model_group,
+                                "RF" = "Risk Score",
+                                "ECG+RF" = "ECG + Risk Score")
+```
+
+
+```{r}
+ggplot(df0, aes(x = model_group, y = HR, colour = term)) +
+  geom_point(position = position_dodge(width = 0.4), size = 1) +
+  geom_hline(yintercept = 1, color = "black", linewidth = 0.4, linetype = "dashed") +
+  geom_errorbar(aes(ymin = lower, ymax = upper),
+                width = 0.15,
+                position = position_dodge(width = 0.4)) +
+  facet_wrap(~ panel, ncol = 4) +
+  theme_bw(base_size = 10) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 8, face="bold"),
+    axis.text.y = element_text(size = 8),
+    strip.text = element_text(face="bold", size=9),
+    axis.title = element_text(face="bold", size=10),
+    legend.title = element_blank(),
+    legend.text = element_text(face="bold", size=9)
+  ) +
+  labs(
+    title = "CHS Zero-shot Hazard Ratios (95% CI)",
+    x = NULL,
+    y = "Hazard Ratio (vs. low)"
+  )
+
+ggplot(df10, aes(x = model_group, y = HR, colour = term)) +
+  geom_point(position = position_dodge(width = 0.4), size = 1)  +
+  geom_hline(yintercept = 1, color = "black", linewidth = 0.4, linetype = "dashed") +
+  geom_errorbar(aes(ymin = lower, ymax = upper),
+                width = 0.15,
+                position = position_dodge(width = 0.4)) +
+  facet_wrap(~ panel, ncol = 4) +
+  theme_bw(base_size = 10) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 8, face="bold"),
+    axis.text.y = element_text(size = 8),
+    strip.text = element_text(face="bold", size=9),
+    axis.title = element_text(face="bold", size=10),
+    legend.title = element_blank(),
+    legend.text = element_text(face="bold", size=9)
+  ) +
+  labs(
+    title = "CHS Few-shot(10%) Hazard Ratios (95% CI)",
+    x = NULL,
+    y = "Hazard Ratio (vs. low)"
+  )
+
+
+ggplot(df20, aes(x = model_group, y = HR, colour = term)) +
+  geom_point(position = position_dodge(width = 0.4), size = 1)  +
+  geom_hline(yintercept = 1, color = "black", linewidth = 0.4, linetype = "dashed") +
+  geom_errorbar(aes(ymin = lower, ymax = upper),
+                width = 0.15,
+                position = position_dodge(width = 0.4)) +
+  facet_wrap(~ panel, ncol = 4) +
+  theme_bw(base_size = 10) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 8, face="bold"),
+    axis.text.y = element_text(size = 8),
+    strip.text = element_text(face="bold", size=9),
+    axis.title = element_text(face="bold", size=10),
+    legend.title = element_blank(),
+    legend.text = element_text(face="bold", size=9)
+  ) +
+  labs(
+    title = "CHS Few-shot(20%) Hazard Ratios (95% CI)",
+    x = NULL,
+    y = "Hazard Ratio (vs. low)"
+  )
+```
+```{r}
+df0_5year <- df0 %>%
+  filter(score %in% c("AF5", "HF5")) %>%
+  mutate(panel = case_when(
+    panel == "AF (AF5 score)" ~ "Atrial Fibrillation",
+    panel == "HF (HF5 score)" ~ "Heart Failure",
+    panel == "HFPEF (HF5 score)" ~ "Heart Failure with preserved EF subtype",
+    panel == "HFREF (HF5 score)" ~ "Heart Failure with reduced EF subtype",
+    TRUE ~ panel
+  ))
+
+df10_5year <- df10 %>%
+  filter(score %in% c("AF5", "HF5")) %>%
+  mutate(panel = case_when(
+    panel == "AF (AF5 score)" ~ "Atrial Fibrillation",
+    panel == "HF (HF5 score)" ~ "Heart Failure",
+    panel == "HFPEF (HF5 score)" ~ "Heart Failure with preserved EF subtype",
+    panel == "HFREF (HF5 score)" ~ "Heart Failure with reduced EF subtype",
+    TRUE ~ panel
+  ))
+
+df20_5year <- df20 %>%
+  filter(score %in% c("AF5", "HF5")) %>%
+  mutate(panel = case_when(
+    panel == "AF (AF5 score)" ~ "Atrial Fibrillation",
+    panel == "HF (HF5 score)" ~ "Heart Failure",
+    panel == "HFPEF (HF5 score)" ~ "Heart Failure with preserved EF subtype",
+    panel == "HFREF (HF5 score)" ~ "Heart Failure with reduced EF subtype",
+    TRUE ~ panel
+  ))
+
+order_panels <- c("Atrial Fibrillation", "Heart Failure", "Heart Failure with preserved EF subtype", "Heart Failure with reduced EF subtype")
+
+df0_5year$panel <- factor(df0_5year$panel, levels = order_panels)
+df10_5year$panel <- factor(df10_5year$panel, levels = order_panels)
+df20_5year$panel <- factor(df20_5year$panel, levels = order_panels)
+```
+
+```{r}
+df10_5year <- df10_5year[df10_5year$model_group == "ECG + Risk Score", ]
+df20_5year <- df20_5year[df20_5year$model_group == "ECG + Risk Score", ]
+```
+
+```{r}
+df0_5year$model_group <- paste0(df0_5year$model_group, "(0%)")
+df10_5year$model_group <- paste0(df10_5year$model_group, "(10%)")
+df20_5year$model_group <- paste0(df20_5year$model_group, "(20%)")
+df_5year <- dplyr::bind_rows(df0_5year, df10_5year, df20_5year)
+df_5year$model_group <- factor(
+  df_5year$model_group,
+  levels = c(
+    "Risk Score(0%)",
+    "ECG + Risk Score(0%)",
+    "ECG + Risk Score(10%)",
+    "ECG + Risk Score(20%)"
+  )
+)
+
+```
+
+
+```{r}
+ggplot(df_5year, aes(x = model_group, y = HR, colour = term)) +
+  geom_point(position = position_dodge(width = 0.4), size = 1) +
+  geom_hline(yintercept = 1, color = "black", linewidth = 0.4, linetype = "dashed") +
+  geom_errorbar(aes(ymin = lower, ymax = upper),
+                width = 0.15,
+                position = position_dodge(width = 0.4)) +
+  facet_wrap(~ panel, ncol = 2) +
+  theme_bw(base_size = 10) +
+  theme(
+    axis.text.x = element_text(size = 10, face = "bold", angle = 45, hjust = 1),
+    axis.text.y = element_text(size = 12, face="bold"),
+    strip.text = element_text(face="bold", size=9),
+    axis.title = element_text(face="bold", size=12),
+    legend.title = element_blank(),
+    legend.text = element_text(face="bold", size=10),
+    title = element_text(face="bold", size=12),
+  ) +
+  labs(
+    title = "CHS Hazard Ratios (95% CI)",
+    x = NULL,
+    y = "Hazard Ratio (vs. low)"
+  )
+
+```
+
+
+```{r}
+write.csv(df0_5year, "/Users/fuminli/Desktop/ECG_MRI/result_table/CHS_HR0.csv", row.names = FALSE)
+write.csv(df10_5year, "/Users/fuminli/Desktop/ECG_MRI/result_table/CHS_HR10.csv", row.names = FALSE)
+write.csv(df20_5year, "/Users/fuminli/Desktop/ECG_MRI/result_table/CHS_HR20.csv", row.names = FALSE)
+```
+
+# CHS CMR Features Cor
+
+```{r}
+root <- "/Users/fuminli/Desktop/ECG_MRI/csv_train_valid_test_individual_temp"
+
+splits <- paste0("split", 1:4)
+labels <- c("lavmax", "lavmin", "laef", "lvedv", "lvesv", "lvef", "lvm")
+
+df_list <- list()
+
+for (sp in splits) {
+  for (lab in labels) {
+    
+    file_path <- file.path(
+      root,
+      sp,
+      "CHS",
+      "ECGstage1_downstream",
+      paste0("test_", lab, "_long_full.csv")
+    )
+    
+    if (file.exists(file_path)) {
+      df_list[[paste0(sp, "_", lab)]] <- read.csv(file_path)
+    } else {
+      message("Missing: ", file_path)
+    }
+  }
+}
+
+
+```
+
+```{r}
+labels <- c("lavmax", "lavmin", "laef", "lvedv", "lvesv", "lvef", "lvm")
+
+make_cmr_features <- function(split_id, df_list) {
+  preds <- lapply(labels, function(lab) {
+    name <- paste0("split", split_id, "_", lab)
+    df <- df_list[[name]]
+    df[["y_pred"]]
+  })
+  df_out <- as.data.frame(preds)
+  colnames(df_out) <- paste0(labels, "_pred")
+  df_out
+}
+
+cmr_features1 <- make_cmr_features(1, df_list)
+cmr_features2 <- make_cmr_features(2, df_list)
+cmr_features3 <- make_cmr_features(3, df_list)
+cmr_features4 <- make_cmr_features(4, df_list)
+
+```
+
+
+```{r}
+CHS1_new <- cbind(CHS1, cmr_features1)
+CHS2_new <- cbind(CHS2, cmr_features2)
+CHS3_new <- cbind(CHS3, cmr_features3)
+CHS4_new <- cbind(CHS4, cmr_features4)
+
+```
+
+```{r}
+for(col_idx in 2:25) {
+  for(i in 1:4) {
+    table_name <- paste0("CHS", i, "_new")
+    tables_list <- list(CHS1_new, CHS2_new, CHS3_new, CHS4_new)
+    
+    all_vals <- do.call(cbind, lapply(tables_list, function(df) df[, col_idx]))
+    avg_vals <- rowMeans(all_vals, na.rm = FALSE)
+    
+    assign(table_name, `[<-`(get(table_name), , col_idx, avg_vals))
+  }
+}
+```
+
+
+```{r}
+library(survival)
+library(dplyr)
+
+label_vars <- c("lavmax_pred","lavmin_pred","laef_pred",
+                "lvedv_pred","lvesv_pred","lvef_pred","lvm_pred")
+
+rf_vars <- c("age","chol","hdl","sbp","bmiimp",
+             "egfr","dm","cursmk","lipid","htnmed","gender")
+
+chs_list <- list(
+  CHS1_new = CHS1_new,
+  CHS2_new = CHS2_new,
+  CHS3_new = CHS3_new,
+  CHS4_new = CHS4_new
+)
+
+outcome_labels <- list(
+  af    = list(time="ttoaf",    event="incaf"),
+  hf    = list(time="ttohf",    event="inchf"),
+  hfref = list(time="ttohfref", event="inchfref"),
+  hfpef = list(time="ttohfpef", event="inchfpef")
+)
+
+hr_list <- list()
+
+beta_mat <- matrix(NA_real_, 
+                   nrow = length(chs_list), 
+                   ncol = length(label_vars),
+                   dimnames = list(names(chs_list), label_vars))
+se_mat <- matrix(NA_real_,  
+                   nrow = length(chs_list), 
+                   ncol = length(label_vars),
+                   dimnames = list(names(chs_list), label_vars))
+  
+
+for (outname in names(outcome_labels)) {
+  
+  time_var  <- outcome_labels[[outname]]$time
+  event_var <- outcome_labels[[outname]]$event
+  
+  for (lab in label_vars) {
+    for (sname in names(chs_list)) {
+      prev_var <- paste0("prev", outname)
+      df <- chs_list[[sname]]
+      
+      df_use <- df %>% 
+        filter(.data[[prev_var]] == 0) %>%
+        select(all_of(c(rf_vars, lab, time_var, event_var))) %>% 
+        na.omit() %>% 
+        mutate(label_z = as.numeric(scale(.data[[lab]])))
+      
+      fml <- as.formula(
+        paste0("Surv(", time_var, ", ", event_var, ") ~ ",
+               paste(c(rf_vars, "label_z"), collapse=" + "))
+      )
+      
+      fit <- coxph(fml, data=df_use)
+      beta_mat[sname, lab] <- coef(fit)["label_z"]
+      se_mat[sname, lab] <- sqrt(vcov(fit)["label_z", "label_z"])
+    }
+  }
+  # mean ± 1.96 SD
+  beta_summary <- sapply(label_vars, function(lab) {
+    betas <- beta_mat[, lab]
+    ses <- se_mat[, lab]
+    m <- length(betas)
+  
+    Q_bar <- mean(betas, na.rm = TRUE)
+    U_bar <- mean(ses^2, na.rm = TRUE)
+    B <- var(betas, na.rm = TRUE)
+  
+    T_total <- U_bar + (1 + 1/m) * B
+    df_old <- (m - 1) * (1 + U_bar/((1 + 1/m) * B))^2
+  
+    se_total <- sqrt(T_total)
+    lower <- Q_bar - qt(0.975, df_old) * se_total
+    upper <- Q_bar + qt(0.975, df_old) * se_total
+  
+    c(mean = Q_bar, lower = lower, upper = upper, se_total = se_total, df = df_old)
+  })
+  
+  hr_summary_df <- as.data.frame(t(beta_summary)) %>%
+    mutate(
+      label    = rownames(.),
+      HR       = exp(mean),
+      HR_lower = exp(lower),
+      HR_upper = exp(upper)
+    ) %>%
+    select(label, HR, HR_lower, HR_upper)
+
+  hr_list[[outname]] <- hr_summary_df
+}
+
+hr_list
+
+```
+
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(purrr)
+library(stringr)
+
+feat_base_order <- c("laef","lavmax","lavmin","lvedv","lvesv","lvm","lvef")
+
+plotdata <- map_df(names(hr_list), function(outcome) {
+  hr_list[[outcome]] %>%
+    mutate(
+      outcome = toupper(outcome),
+      feature_base = sub("_pred$", "", label)
+    )
+}) %>%
+  filter(feature_base %in% feat_base_order) %>%
+  mutate(
+    feature_base = factor(feature_base, levels = feat_base_order),
+    outcome = factor(outcome,
+                     levels = c("AF","HF","IS","HFREF","HFPEF","ATH","CES","LAC"))
+  )
+
+```
+
+```{r}
+plotdata$feature_base <- recode(plotdata$feature_base,
+                                "lavmax" = "LAVmax",
+                                "lavmin" = "LAVmin",
+                                "laef" = "LAEF",
+                                "lvef" = "LVEF",
+                                "lvedv" = "LVEDV",
+                                "lvesv" = "LVESV",
+                                "lvm" = "LVM")
+
+feat_base_order <- c("LAVmin","LAVmax","LAEF","LVEF","LVEDV","LVESV","LVM")
+```
+
+
+```{r}
+p <- ggplot(plotdata, aes(x = feature_base, y = HR)) +
+  geom_point(color = "#2A9D8F", size = 1)  +
+  geom_hline(yintercept = 1, color = "black", linewidth = 0.4, linetype = "dashed") +
+  geom_errorbar(aes(ymin = HR_lower, ymax = HR_upper),
+                width = 0.1, color = "#2A9D8F") +
+  facet_grid(outcome ~ ., scales = "fixed") +
+  scale_y_continuous(limits = c(0, 2.5)) +
+  theme_bw(base_size = 18) +
+  theme(
+    strip.background = element_rect(fill = "grey70"),
+    strip.text = element_text(face = "bold", size = 12),
+    axis.text.x = element_text(angle = 45, hjust = 1,
+                               face = "bold", size = 12),
+    axis.text.y = element_text(face = "bold", size = 12),
+    axis.title.y = element_blank(),
+    axis.title.x = element_blank(),
+    plot.title = element_text(face = "bold", size = 15, hjust = 0.5),
+    legend.position = "right",
+    legend.text = element_text(size = 12, face = "bold")
+  ) 
+```
+
+```{r}
+ggsave("/Users/fuminli/Desktop/ECG_MRI/cmr_hr_plot_chs.png", p, width = 7, height = 6, dpi = 300)
+
+```
+
+```{r}
+write.csv(plotdata, "/Users/fuminli/Desktop/ECG_MRI/result_table/CHS_HR_CMR.csv", row.names = FALSE)
+```
+
+

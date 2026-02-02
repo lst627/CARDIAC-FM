@@ -1,0 +1,683 @@
+---
+title: "CHARGE-AF_CHS"
+author: "Fumin Li"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+#### Run UKBB first
+```{r}
+CHS1 <- read.csv("/Users/fuminli/Desktop/ECG_MRI/csv_train_valid_test_individual_id_disease/CHS_stage1_split1.csv")
+```
+
+```{r}
+labels <- c("af3", "af5", "hf3", "hf5")
+models <- c("ECGstage1_RF")
+suffixes <- c("0", "10", "20")
+
+read_split <- function(split_num) {
+  base <- paste0("/Users/fuminli/Desktop/ECG_MRI/csv_train_valid_test_individual_temp/split",
+                 split_num, "/CHS/ECGstage1_downstream")
+  out <- list()
+  
+  for (lb in labels) {
+    for (md in models) {
+      for (suf in suffixes) {
+        
+        fname <- paste0("test_", lb, "_long_full_", suf, ".csv")
+        key <- paste0(lb, "_", suf)
+      
+        fpath <- file.path(base, fname)
+        if (file.exists(fpath)) {
+          out[[key]] <- read.csv(fpath)
+        }
+      }
+    }
+  }
+  out
+}
+
+tables_split2 <- read_split(2)
+tables_split3 <- read_split(3)
+tables_split4 <- read_split(4)
+
+```
+
+```{r}
+fill_CHS <- function(template, tables_split) {
+  out <- template
+  
+  for (nm in names(tables_split)) {
+    mask <- !is.na(template[[nm]])
+    vals <- tables_split[[nm]]$y_pred
+    out[[nm]][mask] <- vals
+  }
+  
+  out
+}
+
+CHS2 <- fill_CHS(CHS1, tables_split2)
+CHS3 <- fill_CHS(CHS1, tables_split3)
+CHS4 <- fill_CHS(CHS1, tables_split4)
+
+CHS1 <- CHS1[, c("id", "af5_0", "af5_10", "af5_20")]
+CHS2 <- CHS2[, c("id", "af5_0", "af5_10", "af5_20")]
+CHS3 <- CHS3[, c("id", "af5_0", "af5_10", "af5_20")]
+CHS4 <- CHS4[, c("id", "af5_0", "af5_10", "af5_20")]
+```
+
+```{r}
+CHS_true <- read.csv("/Users/fuminli/Desktop/ECG_MRI/csv_train_valid_test_individual_temp/split1/CHS/ECGstage1_downstream/test_af5_long_full_0.csv")
+idx <- which(!is.na(CHS1$af5_0))
+
+CHS1$y_true <- NA
+CHS1$y_true[idx] <- CHS_true$y_true
+
+CHS2$y_true <- NA
+CHS2$y_true[idx] <- CHS_true$y_true
+
+CHS3$y_true <- NA
+CHS3$y_true[idx] <- CHS_true$y_true
+
+CHS4$y_true <- NA
+CHS4$y_true[idx] <- CHS_true$y_true
+```
+
+```{r}
+CHS <- read.csv("/Users/fuminli/Desktop/ECG_MRI/CHARGE-PREVENT/charge_prevent_CHS.csv")
+CHS <- dplyr::select(CHS, -timepoint)
+```
+
+```{r}
+library(mice)
+
+set.seed(123)
+id <- CHS$seqid
+
+dat <- CHS
+dat$seqid <- NULL
+
+imp <- mice(
+  dat,
+  m = 4,
+  maxit = 20,
+  seed = 123,
+  printFlag = TRUE
+)
+
+CHS_imp_list <- lapply(1:4, function(i) {
+  out <- complete(imp, action = i)
+  out$seqid <- id
+  out <- out[, c("seqid", setdiff(colnames(out), "seqid"))]
+  out
+})
+
+CHS_imp1 <- CHS_imp_list[[1]]
+CHS_imp2 <- CHS_imp_list[[2]]
+CHS_imp3 <- CHS_imp_list[[3]]
+CHS_imp4 <- CHS_imp_list[[4]]
+```
+
+```{r}
+library(dplyr)
+library(pROC)
+CHS_charge1 <- CHS_imp1 %>%
+  mutate(charge_age    = age/5*0.508,
+         charge_race   = ifelse(race01 == 1, 0.465, 0),
+         charge_height = htimp/10*0.248,
+         charge_weight = weight/15*0.115,
+         charge_sbp    = sbp/20*0.197,
+         charge_dbp    = dbp/10*(-0.101),
+         charge_smk    = ifelse(cursmk == 1, 0.359, 0),
+         charge_htnmed = ifelse(htnmed == 1, 0.349, 0),
+         charge_prevdm = ifelse(dm == 1, 0.237, 0),
+         charge_prevhf = ifelse(prevhf == 1, 0.701, 0),
+         charge_prevmi = ifelse(prevmi == 1, 0.496, 0),
+         charge_sum    = charge_age + charge_race + charge_height + charge_weight + charge_sbp + charge_dbp +
+                         charge_smk + charge_htnmed + charge_prevdm + charge_prevhf + charge_prevmi,
+         charge_score  = 1 - 0.9718412736^(charge_sum - 12.5815600)) %>%
+  select(seqid, charge_score)
+
+CHS_charge2 <- CHS_imp2 %>%
+  mutate(charge_age    = age/5*0.508,
+         charge_race   = ifelse(race01 == 1, 0.465, 0),
+         charge_height = htimp/10*0.248,
+         charge_weight = weight/15*0.115,
+         charge_sbp    = sbp/20*0.197,
+         charge_dbp    = dbp/10*(-0.101),
+         charge_smk    = ifelse(cursmk == 1, 0.359, 0),
+         charge_htnmed = ifelse(htnmed == 1, 0.349, 0),
+         charge_prevdm = ifelse(dm == 1, 0.237, 0),
+         charge_prevhf = ifelse(prevhf == 1, 0.701, 0),
+         charge_prevmi = ifelse(prevmi == 1, 0.496, 0),
+         charge_sum    = charge_age + charge_race + charge_height + charge_weight + charge_sbp + charge_dbp +
+                         charge_smk + charge_htnmed + charge_prevdm + charge_prevhf + charge_prevmi,
+         charge_score  = 1 - 0.9718412736^(charge_sum - 12.5815600)) %>%
+  select(seqid, charge_score)
+
+CHS_charge3 <- CHS_imp3 %>%
+  mutate(charge_age    = age/5*0.508,
+         charge_race   = ifelse(race01 == 1, 0.465, 0),
+         charge_height = htimp/10*0.248,
+         charge_weight = weight/15*0.115,
+         charge_sbp    = sbp/20*0.197,
+         charge_dbp    = dbp/10*(-0.101),
+         charge_smk    = ifelse(cursmk == 1, 0.359, 0),
+         charge_htnmed = ifelse(htnmed == 1, 0.349, 0),
+         charge_prevdm = ifelse(dm == 1, 0.237, 0),
+         charge_prevhf = ifelse(prevhf == 1, 0.701, 0),
+         charge_prevmi = ifelse(prevmi == 1, 0.496, 0),
+         charge_sum    = charge_age + charge_race + charge_height + charge_weight + charge_sbp + charge_dbp +
+                         charge_smk + charge_htnmed + charge_prevdm + charge_prevhf + charge_prevmi,
+         charge_score  = 1 - 0.9718412736^(charge_sum - 12.5815600)) %>%
+  select(seqid, charge_score)
+
+CHS_charge4 <- CHS_imp4 %>%
+  mutate(charge_age    = age/5*0.508,
+         charge_race   = ifelse(race01 == 1, 0.465, 0),
+         charge_height = htimp/10*0.248,
+         charge_weight = weight/15*0.115,
+         charge_sbp    = sbp/20*0.197,
+         charge_dbp    = dbp/10*(-0.101),
+         charge_smk    = ifelse(cursmk == 1, 0.359, 0),
+         charge_htnmed = ifelse(htnmed == 1, 0.349, 0),
+         charge_prevdm = ifelse(dm == 1, 0.237, 0),
+         charge_prevhf = ifelse(prevhf == 1, 0.701, 0),
+         charge_prevmi = ifelse(prevmi == 1, 0.496, 0),
+         charge_sum    = charge_age + charge_race + charge_height + charge_weight + charge_sbp + charge_dbp +
+                         charge_smk + charge_htnmed + charge_prevdm + charge_prevhf + charge_prevmi,
+         charge_score  = 1 - 0.9718412736^(charge_sum - 12.5815600)) %>%
+  select(seqid, charge_score)
+```
+
+```{r}
+CHS1 <- merge(
+  CHS1,
+  CHS_charge1,
+  by.x = "id",
+  by.y = "seqid",
+  all.x = TRUE
+)
+
+CHS2 <- merge(
+  CHS2,
+  CHS_charge2,
+  by.x = "id",
+  by.y = "seqid",
+  all.x = TRUE
+)
+
+CHS3 <- merge(
+  CHS3,
+  CHS_charge3,
+  by.x = "id",
+  by.y = "seqid",
+  all.x = TRUE
+)
+
+CHS4 <- merge(
+  CHS4,
+  CHS_charge4,
+  by.x = "id",
+  by.y = "seqid",
+  all.x = TRUE
+)
+```
+
+
+```{r}
+UKBB_train <- read.csv("/Users/fuminli/Desktop/ECG_MRI/CHARGE-PREVENT/UKBB_train.csv")
+colnames(UKBB_train)[1] <- "eid_visit"
+UKBB_train$eid_visit <- sub("\\.mat$", "", UKBB_train$eid_visit)
+
+UKBB_train <- UKBB_train %>%
+  left_join(
+    UKBB_charge1 %>% 
+      select(eid_visit, charge_pred1 = charge_score),
+    by = "eid_visit"
+  )
+UKBB_train <- UKBB_train %>%
+  left_join(
+    UKBB_charge2 %>% 
+      select(eid_visit, charge_pred2 = charge_score),
+    by = "eid_visit"
+  )
+UKBB_train <- UKBB_train %>%
+  left_join(
+    UKBB_charge3 %>% 
+      select(eid_visit, charge_pred3 = charge_score),
+    by = "eid_visit"
+  )
+UKBB_train <- UKBB_train %>%
+  left_join(
+    UKBB_charge4 %>% 
+      select(eid_visit, charge_pred4 = charge_score),
+    by = "eid_visit"
+  )
+```
+
+
+
+```{r}
+UKBB_train1 <- UKBB_train %>%
+  select(af, af1_pred, charge_pred1) %>%
+  na.omit()
+
+UKBB_train2 <- UKBB_train %>%
+  select(af, af2_pred, charge_pred2) %>%
+  na.omit()
+
+UKBB_train3 <- UKBB_train %>%
+  select(af, af3_pred, charge_pred3) %>%
+  na.omit()
+
+UKBB_train4 <- UKBB_train %>%
+  select(af, af4_pred, charge_pred4) %>%
+  na.omit()
+
+```
+
+
+```{r}
+for (v in 1:4){
+  fit <- glm(
+      as.formula(paste0("af ~ af", v, "_pred + charge_pred", v)),
+      data = get(paste0("UKBB_train", v)),
+      family = binomial(link = "logit")
+    )
+  for (ratio in c(0, 10, 20)) {
+
+    df_eval <- get(paste0("CHS", v))[
+      , c(paste0("af5_", ratio), "charge_score")
+    ]
+
+    chs_name <- paste0("CHS", v)
+    chs_df <- get(chs_name)
+
+    newdata <- data.frame(
+      setNames(list(chs_df[[paste0("af5_", ratio)]]), paste0("af", v, "_pred")),
+      setNames(list(chs_df[["charge_score"]]), paste0("charge_pred", v))
+    )
+
+    chs_df[[paste0("combined_pred", ratio)]] <- predict(fit, newdata = newdata, type = "response")
+    assign(chs_name, chs_df)
+
+  }
+  out_dir <- paste0(
+    "/Users/fuminli/Desktop/ECG_MRI/csv_train_valid_test_individual_temp/",
+    "split", v, "/CHS/CHARGE_PREVENT"
+  )
+  if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)
+  
+  chs_df <- chs_df[match(CHS_template$id, chs_df$id), ]
+
+  df_out1<- chs_df %>%
+    dplyr::select(y_true, charge_score) %>%
+    dplyr::rename(
+      y_true = y_true,
+      y_pred = charge_score
+    ) %>%
+    na.omit()
+
+  write.csv(df_out1, file.path(out_dir, "test_af5.csv"), row.names = FALSE)
+
+
+  df_out2 <- chs_df %>%
+    dplyr::select(y_true, combined_pred0) %>%
+    dplyr::rename(
+      y_true = y_true,
+      y_pred = combined_pred0
+    ) %>%
+    na.omit()
+
+  write.csv(df_out2, file.path(out_dir, "test_af5_cardiacfm0.csv"), row.names = FALSE)
+
+  df_out3 <- chs_df %>%
+    dplyr::select(y_true, combined_pred10) %>%
+    dplyr::rename(
+      y_true = y_true,
+      y_pred = combined_pred10
+    ) %>%
+    na.omit()
+
+  write.csv(df_out3, file.path(out_dir, "test_af5_cardiacfm10.csv"), row.names = FALSE)
+
+  df_out4 <- chs_df %>%
+    dplyr::select(y_true, combined_pred20) %>%
+    dplyr::rename(
+      y_true = y_true,
+      y_pred = combined_pred20
+    ) %>%
+    na.omit()
+
+  write.csv(df_out4, file.path(out_dir, "test_af5_cardiacfm20.csv"), row.names = FALSE)
+
+}
+```
+
+
+```{r}
+model_map <- c(
+  af5_0 = "CARDIAC-FM (0%)",
+  af5_10 = "CARDIAC-FM (10%)",
+  af5_20 = "CARDIAC-FM (20%)",
+  charge_score = "CHARGE-AF",
+  combined_pred0 = "CARDIAC-FM + CHARGE-AF (0%)",
+  combined_pred10 = "CARDIAC-FM + CHARGE-AF (10%)",
+  combined_pred20 = "CARDIAC-FM + CHARGE-AF (20%)"
+)
+
+auc_summary <- list()
+
+for (v in 1:4) {
+
+  chs_df <- get(paste0("CHS", v))
+
+  for (col in names(model_map)) {
+
+    df_tmp <- chs_df %>%
+      select(y_true, all_of(col)) %>%
+      na.omit()
+
+    auc_val <- auc(df_tmp$y_true, df_tmp[[col]])
+
+    auc_summary[[length(auc_summary) + 1]] <- data.frame(
+      CHS = paste0("CHS", v),
+      model = model_map[[col]],
+      auc = as.numeric(auc_val)
+    )
+  }
+}
+
+auc_summary_df <- bind_rows(auc_summary)
+auc_mean_df <- auc_summary_df %>%
+  group_by(model) %>%
+  summarise(
+    mean_auc = mean(auc),
+    .groups = "drop"
+  )
+auc_mean_df
+
+```
+
+##### ECG-FM + CHARGE-AF
+
+```{r}
+CHS_template <- read.csv("/Users/fuminli/Desktop/ECG_MRI/csv_train_valid_test_individual_id_disease/CHS_stage1_split1.csv")
+idx <- which(!is.na(CHS_template$af5_0))
+
+CHS1_0 <- read.csv("/Users/fuminli/Desktop/ECG_MRI/csv_train_valid_test_individual_temp/split1/CHS/ECGFM_downstream/test_af5_long_full_0.csv")
+CHS1_10 <- read.csv("/Users/fuminli/Desktop/ECG_MRI/csv_train_valid_test_individual_temp/split1/CHS/ECGFM_downstream/test_af5_long_full_10.csv")
+CHS1_20 <- read.csv("/Users/fuminli/Desktop/ECG_MRI/csv_train_valid_test_individual_temp/split1/CHS/ECGFM_downstream/test_af5_long_full_20.csv")
+
+CHS2_0 <- read.csv("/Users/fuminli/Desktop/ECG_MRI/csv_train_valid_test_individual_temp/split2/CHS/ECGFM_downstream/test_af5_long_full_0.csv")
+CHS2_10 <- read.csv("/Users/fuminli/Desktop/ECG_MRI/csv_train_valid_test_individual_temp/split2/CHS/ECGFM_downstream/test_af5_long_full_10.csv")
+CHS2_20 <- read.csv("/Users/fuminli/Desktop/ECG_MRI/csv_train_valid_test_individual_temp/split2/CHS/ECGFM_downstream/test_af5_long_full_20.csv")
+
+CHS3_0 <- read.csv("/Users/fuminli/Desktop/ECG_MRI/csv_train_valid_test_individual_temp/split3/CHS/ECGFM_downstream/test_af5_long_full_0.csv")
+CHS3_10 <- read.csv("/Users/fuminli/Desktop/ECG_MRI/csv_train_valid_test_individual_temp/split3/CHS/ECGFM_downstream/test_af5_long_full_10.csv")
+CHS3_20 <- read.csv("/Users/fuminli/Desktop/ECG_MRI/csv_train_valid_test_individual_temp/split3/CHS/ECGFM_downstream/test_af5_long_full_20.csv")
+
+CHS4_0 <- read.csv("/Users/fuminli/Desktop/ECG_MRI/csv_train_valid_test_individual_temp/split4/CHS/ECGFM_downstream/test_af5_long_full_0.csv")
+CHS4_10 <- read.csv("/Users/fuminli/Desktop/ECG_MRI/csv_train_valid_test_individual_temp/split4/CHS/ECGFM_downstream/test_af5_long_full_10.csv")
+CHS4_20 <- read.csv("/Users/fuminli/Desktop/ECG_MRI/csv_train_valid_test_individual_temp/split4/CHS/ECGFM_downstream/test_af5_long_full_20.csv")
+```
+
+
+
+```{r}
+CHS1 <- CHS_template[, c("id", "af5_0", "af5_10", "af5_20")]
+CHS1$y_true <- NA
+CHS1$af5_0 <- NA
+CHS1$af5_10 <- NA
+CHS1$af5_20 <- NA
+
+CHS1$y_true[idx] <- CHS1_0$y_true
+CHS1$af5_0[idx] <- CHS1_0$y_pred
+CHS1$af5_10[idx] <- CHS1_10$y_pred
+CHS1$af5_20[idx] <- CHS1_20$y_pred
+
+CHS2 <- CHS_template[, c("id", "af5_0", "af5_10", "af5_20")]
+CHS2$y_true <- NA
+CHS2$af5_0 <- NA
+CHS2$af5_10 <- NA
+CHS2$af5_20 <- NA
+
+CHS2$y_true[idx] <- CHS2_0$y_true
+CHS2$af5_0[idx] <- CHS2_0$y_pred
+CHS2$af5_10[idx] <- CHS2_10$y_pred
+CHS2$af5_20[idx] <- CHS2_20$y_pred
+
+CHS3 <- CHS_template[, c("id", "af5_0", "af5_10", "af5_20")]
+CHS3$y_true <- NA
+CHS3$af5_0 <- NA
+CHS3$af5_10 <- NA
+CHS3$af5_20 <- NA
+
+CHS3$y_true[idx] <- CHS3_0$y_true
+CHS3$af5_0[idx] <- CHS3_0$y_pred
+CHS3$af5_10[idx] <- CHS3_10$y_pred
+CHS3$af5_20[idx] <- CHS3_20$y_pred
+
+CHS4 <- CHS_template[, c("id", "af5_0", "af5_10", "af5_20")]
+CHS4$y_true <- NA
+CHS4$af5_0 <- NA
+CHS4$af5_10 <- NA
+CHS4$af5_20 <- NA
+
+CHS4$y_true[idx] <- CHS4_0$y_true
+CHS4$af5_0[idx] <- CHS4_0$y_pred
+CHS4$af5_10[idx] <- CHS4_10$y_pred
+CHS4$af5_20[idx] <- CHS4_20$y_pred
+```
+
+```{r}
+CHS1 <- merge(
+  CHS1,
+  CHS_charge1,
+  by.x = "id",
+  by.y = "seqid",
+  all.x = TRUE
+)
+
+CHS2 <- merge(
+  CHS2,
+  CHS_charge2,
+  by.x = "id",
+  by.y = "seqid",
+  all.x = TRUE
+)
+
+CHS3 <- merge(
+  CHS3,
+  CHS_charge3,
+  by.x = "id",
+  by.y = "seqid",
+  all.x = TRUE
+)
+
+CHS4 <- merge(
+  CHS4,
+  CHS_charge4,
+  by.x = "id",
+  by.y = "seqid",
+  all.x = TRUE
+)
+```
+
+```{r}
+UKBB_train <- read.csv("/Users/fuminli/Desktop/ECG_MRI/CHARGE-PREVENT/UKBB_train_ecgfm.csv")
+colnames(UKBB_train)[1] <- "eid_visit"
+UKBB_train$eid_visit <- sub("\\.mat$", "", UKBB_train$eid_visit)
+
+UKBB_train <- UKBB_train %>%
+  left_join(
+    UKBB_charge1 %>% 
+      select(eid_visit, charge_pred1 = charge_score),
+    by = "eid_visit"
+  )
+UKBB_train <- UKBB_train %>%
+  left_join(
+    UKBB_charge2 %>% 
+      select(eid_visit, charge_pred2 = charge_score),
+    by = "eid_visit"
+  )
+UKBB_train <- UKBB_train %>%
+  left_join(
+    UKBB_charge3 %>% 
+      select(eid_visit, charge_pred3 = charge_score),
+    by = "eid_visit"
+  )
+UKBB_train <- UKBB_train %>%
+  left_join(
+    UKBB_charge4 %>% 
+      select(eid_visit, charge_pred4 = charge_score),
+    by = "eid_visit"
+  )
+```
+
+
+
+```{r}
+UKBB_train1 <- UKBB_train %>%
+  select(af, af1_pred, charge_pred1) %>%
+  na.omit()
+
+UKBB_train2 <- UKBB_train %>%
+  select(af, af2_pred, charge_pred2) %>%
+  na.omit()
+
+UKBB_train3 <- UKBB_train %>%
+  select(af, af3_pred, charge_pred3) %>%
+  na.omit()
+
+UKBB_train4 <- UKBB_train %>%
+  select(af, af4_pred, charge_pred4) %>%
+  na.omit()
+
+```
+
+
+```{r}
+for (v in 1:4){
+  fit <- glm(
+      as.formula(paste0("af ~ af", v, "_pred + charge_pred", v)),
+      data = get(paste0("UKBB_train", v)),
+      family = binomial(link = "logit")
+    )
+  for (ratio in c(0, 10, 20)) {
+
+    df_eval <- get(paste0("CHS", v))[
+      , c(paste0("af5_", ratio), "charge_score")
+    ]
+
+    chs_name <- paste0("CHS", v)
+    chs_df <- get(chs_name)
+
+    newdata <- data.frame(
+      setNames(list(chs_df[[paste0("af5_", ratio)]]), paste0("af", v, "_pred")),
+      setNames(list(chs_df[["charge_score"]]), paste0("charge_pred", v))
+    )
+
+    chs_df[[paste0("combined_pred", ratio)]] <- predict(fit, newdata = newdata, type = "response")
+    assign(chs_name, chs_df)
+
+  }
+    out_dir <- paste0(
+    "/Users/fuminli/Desktop/ECG_MRI/csv_train_valid_test_individual_temp/",
+    "split", v, "/CHS/CHARGE_PREVENT"
+  )
+  if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)
+    
+    
+  chs_df <- chs_df[match(CHS_template$id, chs_df$id), ]
+
+  df_out2 <- chs_df %>%
+    dplyr::select(y_true, combined_pred0) %>%
+    dplyr::rename(
+      y_true = y_true,
+      y_pred = combined_pred0
+    ) %>%
+    na.omit()
+
+  write.csv(df_out2, file.path(out_dir, "test_af5_ecgfm0.csv"), row.names = FALSE)
+
+  df_out3 <- chs_df %>%
+    dplyr::select(y_true, combined_pred10) %>%
+    dplyr::rename(
+      y_true = y_true,
+      y_pred = combined_pred10
+    ) %>%
+    na.omit()
+
+  write.csv(df_out3, file.path(out_dir, "test_af5_ecgfm10.csv"), row.names = FALSE)
+
+  df_out4 <- chs_df %>%
+    dplyr::select(y_true, combined_pred20) %>%
+    dplyr::rename(
+      y_true = y_true,
+      y_pred = combined_pred20
+    ) %>%
+    na.omit()
+
+  write.csv(df_out4, file.path(out_dir, "test_af5_ecgfm20.csv"), row.names = FALSE)
+}
+```
+
+```{r}
+model_map <- c(
+  af5_0 = "ECG-FM (0%)",
+  af5_10 = "ECG-FM (10%)",
+  af5_20 = "ECG-FM (20%)",
+  charge_score = "CHARGE-AF",
+  combined_pred0 = "ECG-FM + CHARGE-AF (0%)",
+  combined_pred10 = "ECG-FM + CHARGE-AF (10%)",
+  combined_pred20 = "ECG-FM + CHARGE-AF (20%)"
+)
+
+auc_summary <- list()
+
+for (v in 1:4) {
+
+  chs_df <- get(paste0("CHS", v))
+
+  for (col in names(model_map)) {
+
+    df_tmp <- chs_df %>%
+      select(y_true, all_of(col)) %>%
+      na.omit()
+
+    auc_val <- auc(df_tmp$y_true, df_tmp[[col]])
+
+    auc_summary[[length(auc_summary) + 1]] <- data.frame(
+      CHS = paste0("CHS", v),
+      model = model_map[[col]],
+      auc = as.numeric(auc_val)
+    )
+  }
+}
+
+auc_summary_df <- bind_rows(auc_summary)
+auc_mean_df <- auc_summary_df %>%
+  group_by(model) %>%
+  summarise(
+    mean_auc = mean(auc),
+    .groups = "drop"
+  )
+auc_mean_df
+
+```
+
+
+
+
+
+
+
+
+
