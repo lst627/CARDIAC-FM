@@ -1,0 +1,407 @@
+---
+title: "UKBB_AUC_AUROC"
+author: "Fumin Li"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(pROC)
+library(PRROC)
+library(dplyr)
+library(ggplot2)
+library(ggpattern)
+
+path <- "/Users/fuminli/Desktop/ECG_MRI/csv_train_valid_test_individual_id_disease"
+
+ecgmrirf_splits <- lapply(1:4, function(i) {
+  read.csv(file.path(path, paste0("ECGMRIstage1_RF_UKBB_split", i, ".csv")))
+})
+
+ecgrf_splits <- lapply(1:4, function(i) {
+  read.csv(file.path(path, paste0("ECGstage1_RF_UKBB_split", i, ".csv")))
+})
+
+rf_splits <- lapply(1:4, function(i) {
+  read.csv(file.path(path, paste0("RF_UKBB_split", i, ".csv")))
+})
+
+```
+
+
+
+```{r}
+af5_cmr <- read.csv("/Users/fuminli/Desktop/ECG_MRI/MRI_test_new/af5.csv")
+hf5_cmr <- read.csv("/Users/fuminli/Desktop/ECG_MRI/MRI_test_new/hf5.csv")
+```
+
+
+
+
+```{r}
+ecgrf_splits[[1]]$mri <- ifelse(ecgrf_splits[[1]]$eid_visit %in% ecgmrirf_splits[[1]]$eid_visit, 1, 0)
+af5_selected <- ecgrf_splits[[1]] %>%
+  select(af5_pred, mri) %>%
+  na.omit()
+
+hf5_selected <- ecgrf_splits[[1]] %>%
+  select(hf5_pred, mri) %>%
+  na.omit()
+```
+
+
+```{r}
+af5_indices <- which(af5_selected$mri == 1)
+hf5_indices <- which(hf5_selected$mri == 1)
+```
+
+
+```{r}
+base_dir <- "/Users/fuminli/Desktop/ECG_MRI/csv_train_valid_test_individual_temp"
+splits <- 1:4
+labels <- c("af5", "hf5")
+models <- c("RF", "ECGMRIStage1", "ECGMRIStage1+RF", "ECGStage1+RF", "ECGStage1", "ECGFM", "ECGFM+RF")
+
+results <- data.frame()
+
+for (model in models) {
+  for (label in labels) {
+    for (split in splits) {
+      suffix <- switch(model,
+        "RF" = paste0("CHARGE_PREVENT/test_", label, ".csv"),
+        "ECGFM" = paste0("ECGFM_downstream/test_", label, "_long_full.csv"),
+        "ECGStage1" = paste0("ECGstage1_downstream/test_", label, "_long_full.csv"),
+        "ECGStage1+RF" = paste0("CHARGE_PREVENT/test_", label, "_cardiacfm.csv"),
+        "ECGMRIStage1" = paste0("ECGMRI_stage1_downstream/test_", label, "_long_senc_proj.csv"),
+        "ECGMRIStage1+RF" = paste0("CHARGE_PREVENT/test_", label, "_cardiacfm_ecgmri.csv"),
+        "ECGFM+RF" = paste0("CHARGE_PREVENT/test_", label, "_ecgfm.csv"),
+      )
+
+      file_path <- file.path(base_dir, paste0("split", split), "UKBB", suffix)
+      print(file_path)
+
+      if (file.exists(file_path)) {
+        df <- read.csv(file_path)
+        df$y_true <- as.numeric(gsub("\\[|\\]", "", df$y_true))
+        df$y_pred <- as.numeric(gsub("\\[|\\]", "", df$y_pred))
+        if (model %in% c("RF", "ECGStage1+RF", "ECGStage1", "ECGFM", "ECGFM+RF")) {
+          df <- df[get(paste0(label, "_indices")), ]
+          df <- df[complete.cases(df$y_true, df$y_pred), ]
+        }
+        auc_val <- suppressWarnings(pROC::auc(df$y_true, df$y_pred, direction = "<"))
+        pr <- PRROC::pr.curve(scores.class0 = df$y_pred[df$y_true == 1],
+                              scores.class1 = df$y_pred[df$y_true == 0],
+                              curve = FALSE)
+        pos_ratio <- mean(df$y_true)
+
+        # combine
+        results <- rbind(
+          results,
+          data.frame(
+            model = model,
+            label = label,
+            split = split,
+            AUROC = auc_val,
+            AUPRC = pr$auc.integral,
+            pos_ratio = pos_ratio
+          )
+        )
+      }
+    }
+  }
+}
+
+results <- results %>%
+  arrange(model, label, split)
+
+print(results)
+
+```
+
+
+```{r}
+pattern_map <- c(
+  "Risk Score"="none",
+  "ECG-FM"="none",
+  "CARDIAC-FM (ECG)"="none",
+  "CARDIAC-FM (ECG + MRI)"="none",
+  "ECG-FM + Risk Score"="stripe",
+  "CARDIAC-FM (ECG + Risk Score)"="stripe",
+  "CARDIAC-FM (ECG + MRI + Risk Score)"="stripe"
+)
+
+
+label_map <- c(
+  "af5" = "5-year AF",
+  "hf5" = "5-year HF"
+)
+
+model_map <- c(
+  "RF" = "Risk Score",
+  "ECGFM" = "ECG-FM",
+  "ECGStage1" = "CARDIAC-FM (ECG)",
+  "ECGMRIStage1"="CARDIAC-FM (ECG + MRI)",
+  "ECGFM+RF"= "ECG-FM + Risk Score",
+  "ECGStage1+RF"="CARDIAC-FM (ECG + Risk Score)",
+  "ECGMRIStage1+RF"="CARDIAC-FM (ECG + MRI + Risk Score)"
+)
+
+
+order_models <- c(
+  "Risk Score", "ECG-FM", "CARDIAC-FM (ECG)",  "CARDIAC-FM (ECG + MRI)", "ECG-FM + Risk Score", "CARDIAC-FM (ECG + Risk Score)", "CARDIAC-FM (ECG + MRI + Risk Score)"
+)
+
+order_labels <- c(
+  "5-year AF", "5-year HF"
+)
+
+
+summary_auc <- results %>%
+  group_by(label, model) %>%
+  summarise(
+    mean_auc = mean(AUROC, na.rm = TRUE),
+    se_auc   = sd(AUROC, na.rm = TRUE) / sqrt(n()),
+    lower    = mean_auc - 1.96 * se_auc,
+    upper    = mean_auc + 1.96 * se_auc,
+    .groups  = "drop"
+  )
+
+
+summary_auc$label <- label_map[summary_auc$label]
+summary_auc$model <- model_map[summary_auc$model]
+summary_auc$model <- factor(summary_auc$model, levels = order_models)
+summary_auc$label <- factor(summary_auc$label, levels = order_labels)
+
+summary_auprc <- results %>%
+  group_by(label, model) %>%
+  summarise(
+    mean_auprc = mean(AUPRC, na.rm = TRUE),
+    se_auprc   = sd(AUPRC, na.rm = TRUE) / sqrt(n()),
+    lower      = mean_auprc - 1.96 * se_auprc,
+    upper      = mean_auprc + 1.96 * se_auprc,
+    .groups    = "drop"
+  )
+
+summary_auprc$label <- label_map[summary_auprc$label]
+summary_auprc$model <- model_map[summary_auprc$model]
+summary_auprc$model <- factor(summary_auprc$model, levels = order_models)
+summary_auprc$label <- factor(summary_auprc$label, levels = order_labels)
+
+present_models = intersect(order_models, unique(summary_auc$model))
+
+pal <- c(
+  "#8C564B",
+  "#4C72B0",
+  "#66C2A5",
+  "#FC8D62",
+  "#4C72B0",
+  "#66C2A5",
+  "#FC8D62"
+)[seq_along(present_models)]
+
+p_auc <- ggplot(summary_auc, 
+                aes(x = label, y = mean_auc, fill = model, pattern = model)) +
+  geom_col_pattern(
+      position = position_dodge(width = 0.8), width = 0.7,
+      colour = "black", pattern_fill = "white", pattern_colour = NA,
+      pattern_density = 0.4, pattern_spacing = 0.02, pattern_angle = 45
+  ) +
+  geom_errorbar(
+      aes(ymin = lower, ymax = upper),
+      position = position_dodge(width = 0.8),
+      width = 0.2, linewidth = 0.6
+  ) +
+
+  geom_hline(yintercept = 0.5, color = "black", linewidth = 0.8) +
+  
+  theme_minimal(base_size = 14) +
+  labs(title = "AUROC (Mean ± 95% CI)", x = NULL, y = "AUROC") +
+  scale_fill_manual(values = pal, drop = FALSE) +
+  scale_pattern_manual(values = pattern_map, drop = FALSE) +
+  guides(fill = guide_legend(
+      override.aes = list(pattern = pattern_map[present_models], pattern_fill = "white")
+  )) +
+  theme(panel.grid.major.x = element_blank(), 
+        legend.position = "top", 
+        legend.title = element_blank(), 
+        legend.text = element_text(face = "bold", size = 8)) +
+  
+  coord_cartesian(ylim = c(0.5, 0.85), expand = FALSE)
+
+p_auprc <- ggplot(summary_auprc, aes(x = label, y = mean_auprc, fill = model, pattern = model)) +
+  geom_col_pattern(
+    position = position_dodge(width = 0.8), width = 0.7,
+    colour = "black",
+    pattern_fill = "white",
+    pattern_colour = NA,
+    pattern_density = 0.4,
+    pattern_spacing = 0.02,
+    pattern_angle = 45
+  ) +
+  geom_errorbar(aes(ymin = lower, ymax = upper),
+                position = position_dodge(width = 0.8),
+                width = 0.2, linewidth = 0.6) +
+  theme_minimal(base_size = 14) +
+  labs(title = "AUPRC (Mean ± 95% CI)", x = NULL, y = "AUPRC") +
+  scale_fill_manual(values = pal, drop = FALSE) +
+  scale_pattern_manual(values = pattern_map, drop = FALSE) +
+  guides(fill = guide_legend(
+    override.aes = list(
+      pattern = pattern_map[present_models],
+      pattern_fill = "white"
+    )
+  )) +
+  theme(panel.grid.major.x = element_blank(), 
+        legend.position = "top", 
+        legend.title = element_blank(), 
+        legend.text = element_text(face = "bold", size = 8)) 
+
+
+
+```
+
+```{r}
+summary_auc_5year <- summary_auc[startsWith(as.character(summary_auc$label), "5-year"), ]
+summary_auprc_5year <- summary_auprc[startsWith(as.character(summary_auprc$label), "5-year"), ]
+
+summary_auc_5year <- summary_auc_5year %>%
+  mutate(label = case_when(
+    label == "5-year AF" ~ "Atrial Fibrillation",
+    label == "5-year HF" ~ "Heart Failure",
+    TRUE ~ as.character(label)
+  ))
+
+summary_auprc_5year <- summary_auprc_5year %>%
+  mutate(label = case_when(
+    label == "5-year AF" ~ "Atrial Fibrillation",
+    label == "5-year HF" ~ "Heart Failure",
+    TRUE ~ as.character(label)
+  ))
+```
+
+
+```{r}
+p_auc <- ggplot(summary_auc_5year, 
+                aes(x = label, y = mean_auc, fill = model, pattern = model)) +
+  geom_col_pattern(
+      position = position_dodge(width = 0.8), width = 0.7,
+      colour = "black", pattern_fill = "white", pattern_colour = NA,
+      pattern_density = 0.4, pattern_spacing = 0.02, pattern_angle = 45
+  ) +
+  geom_errorbar(
+      aes(ymin = lower, ymax = upper),
+      position = position_dodge(width = 0.8),
+      width = 0.2, linewidth = 0.6
+  ) +
+
+  geom_hline(yintercept = 0.5, color = "black", linewidth = 0.8) +
+  
+  theme_minimal(base_size = 14) +
+  labs(title = "AUROC (Mean ± 95% CI)", x = NULL, y = "AUROC") +
+  scale_fill_manual(values = pal, drop = FALSE) +
+  scale_pattern_manual(values = pattern_map, drop = FALSE) +
+  guides(
+  fill = guide_legend(
+    nrow = 4,          
+    byrow = TRUE,     
+    override.aes = list(
+      pattern = pattern_map[present_models],
+      pattern_fill = "white"
+      )
+    )
+  ) +
+  theme(
+    axis.text.x  = element_text(face = "bold", size = 12),
+    axis.text.y  = element_text(face = "bold", size = 12),
+    axis.title.x = element_blank(),
+    plot.title   = element_text(face = "bold", size = 18),
+    legend.title = element_blank(),
+    legend.text  = element_text(face = "bold", size = 12),
+    legend.position = "top",
+    legend.box = "horizontal",
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank()
+  )  +
+  
+  coord_cartesian(ylim = c(0.5, 0.9), expand = FALSE)
+
+p_auprc <- ggplot(summary_auprc_5year, aes(x = label, y = mean_auprc, fill = model, pattern = model)) +
+  geom_col_pattern(
+    position = position_dodge(width = 0.8), width = 0.7,
+    colour = "black",
+    pattern_fill = "white",
+    pattern_colour = NA,
+    pattern_density = 0.4,
+    pattern_spacing = 0.02,
+    pattern_angle = 45
+  ) +
+  geom_errorbar(aes(ymin = lower, ymax = upper),
+                position = position_dodge(width = 0.8),
+                width = 0.2, linewidth = 0.6)+
+  geom_hline(yintercept = 0, color = "black", linewidth = 0.8) +
+  theme_minimal(base_size = 14) +
+  labs(title = "AUPRC (Mean ± 95% CI)", x = NULL, y = "AUPRC") +
+  scale_fill_manual(values = pal, drop = FALSE) +
+  scale_pattern_manual(values = pattern_map, drop = FALSE) +
+  guides(
+  fill = guide_legend(
+    nrow = 4,          
+    byrow = TRUE,     
+    override.aes = list(
+      pattern = pattern_map[present_models],
+      pattern_fill = "white"
+      )
+    )
+  ) +
+  theme(
+    axis.text.x  = element_text(face = "bold", size = 14),
+    axis.text.y  = element_text(face = "bold", size = 14),
+    axis.title.x = element_blank(),
+    plot.title   = element_text(face = "bold", size = 18),
+    legend.title = element_blank(),
+    legend.text  = element_text(face = "bold", size = 12),
+    legend.position = "top",
+    legend.box = "horizontal",
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank()
+  ) +
+  coord_cartesian(ylim = c(0, 0.4), expand = FALSE) 
+
+
+p_auc
+p_auprc
+```
+```{r}
+ggsave(
+  filename = "auroc_5year.png",
+  plot = p_auc,
+  width  = 8,    
+  height = 8,   
+  units  = "in",
+  dpi    = 300
+)
+ggsave(
+  filename = "auprc_5year.png",
+  plot = p_auprc,
+  width  = 8,     
+  height = 8,     
+  units  = "in",
+  dpi    = 300
+)
+
+```
+
+
+```{r}
+summary_auc_5year
+write.csv(summary_auc_5year, "/Users/fuminli/Desktop/ECG_MRI/result_table/UKBB_AUC_both.csv")
+```
+
+```{r}
+summary_auprc_5year
+write.csv(summary_auprc_5year, "/Users/fuminli/Desktop/ECG_MRI/result_table/UKBB_AUPRC_both.csv")
+```

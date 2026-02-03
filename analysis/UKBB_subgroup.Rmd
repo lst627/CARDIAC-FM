@@ -1,0 +1,178 @@
+---
+title: "Untitled"
+author: "Fumin Li"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r}
+library(purrr)
+library(tibble)
+library(survival)
+library(stringr)
+library(readr)
+library(pROC)
+library(PRROC)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+
+models <- c("cardiacfm", "cardiacfm_ecgmri")
+labels <- c("af5", "hf5")
+splits <- paste0("split", 1:4)
+groups <- c("age<65", "age>65", "sex0", "sex1", "overall")  
+
+result <- data.frame()
+
+for (model in models) {
+  ECG_model_split <- list()
+  for (i in 1:4) {
+    path <- paste0("/Users/fuminli/Desktop/ECG_MRI/csv_train_valid_test_individual_id_disease/charge_prevent_",
+                   model, "_UKBB_split", i, ".csv")
+    ECG_model_split[[i]] <- read_csv(path, show_col_types = FALSE)
+    ECG_model_split[[i]] <- ECG_model_split[[i]] %>% dplyr::filter(eid_visit %in% ECGMRImodel$eid_visit)
+  }
+  names(ECG_model_split) <- paste0("split", 1:4)
+  
+  ECG_subgroup <- data.frame(
+    model = rep(model, each = length(labels) * length(splits) * length(groups)),
+    label = rep(labels, each = length(splits) * length(groups)),
+    split = rep(rep(splits, each = length(groups)), times = length(labels)),
+    subgroup = rep(groups, times = length(splits) * length(labels)),
+    AUC = NA_real_,
+    AUPRC = NA_real_
+  )
+  
+  row_idx <- 1
+  
+  for (s in 1:4) {
+    df <- ECG_model_split[[s]]
+    df$age_group <- ifelse(df$agecmr >= 65, "age>65", "age<65")
+    df$sex_group <- ifelse(df$sex == 1, "sex1", "sex0")
+    
+    for (label in labels) {
+      mask <- !is.na(df[[label]]) & !is.na(df[[paste0(label, "_pred")]])
+      sub <- df[mask, ]
+      
+      for (grp in groups) {
+        
+        if (grp == "overall") {
+          subset_df <- sub
+        } else if (grepl("age", grp)) {
+          subset_df <- subset(sub, age_group == grp)
+        } else {
+          subset_df <- subset(sub, sex_group == grp)
+        }
+        
+        if (nrow(subset_df) > 5 && length(unique(subset_df[[label]])) > 1) {
+          auc_val <- auc(subset_df[[label]], subset_df[[paste0(label, "_pred")]])
+          pr_val <- pr.curve(
+            scores.class0 = subset_df[[paste0(label, "_pred")]],
+            weights.class0 = subset_df[[label]],
+            curve = FALSE
+          )$auc.integral
+          ECG_subgroup[row_idx, c("AUC", "AUPRC")] <- c(auc_val, pr_val)
+        }
+        ECG_subgroup[row_idx, c("model", "label", "split", "subgroup")] <- c(model, label, paste0("split", s), grp)
+        row_idx <- row_idx + 1
+      }
+    }
+  }
+  result <- bind_rows(result, ECG_subgroup)
+}
+
+# --- Summary + CI ---
+result_summary <- result %>%
+  group_by(model, label, subgroup) %>%
+  summarise(
+    AUC_mean = mean(AUC, na.rm = TRUE),
+    AUC_sd   = sd(AUC, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+result_long <- result_summary %>%
+  mutate(
+    AUC_lower = AUC_mean - 1.96 * (AUC_sd / sqrt(4)),
+    AUC_upper = AUC_mean + 1.96 * (AUC_sd / sqrt(4)),
+  ) %>%
+  pivot_longer(
+    cols = c(AUC_mean, AUC_lower,AUC_upper),
+    names_to = c("metric", ".value"),
+    names_pattern = "(AUC|AUPRC)_(.*)"
+  )
+
+print(result_long)
+```
+
+```{r}
+result_long$model <- case_when(
+  result_long$model == "cardiacfm_ecgmri" ~ "CARDIAC-FM (ECG + MRI + Risk Score)",
+  result_long$model == "cardiacfm" ~ "CARDIAC-FM (ECG + Risk Score)",
+  TRUE ~ result_long$model
+)
+
+result_long$label <- case_when(
+  result_long$label == "af5" ~ "Atrial Fibrillation",
+  result_long$label == "hf5" ~ "Heart Failure",
+  TRUE ~ result_long$label
+)
+
+result_long$label <- factor(result_long$label,
+                           levels = c("Atrial Fibrillation", "Heart Failure"))
+```
+
+
+```{r}
+df_plot <- result_long %>%
+  filter(metric == "AUC") %>%
+  mutate(
+    Subgroup = case_when(
+      subgroup %in% c("overall", "Overall") ~ "Overall",
+      subgroup %in% c("sex1", "male", "Male") ~ "Male",
+      subgroup %in% c("sex0", "female", "Female") ~ "Female",
+      subgroup %in% c("age>65", "age>=65", "Age>=65") ~ "Age ≥65",
+      subgroup %in% c("age<65", "Age<65") ~ "Age <65",
+      TRUE ~ subgroup
+    ),
+    Subgroup = factor(Subgroup, levels = c("Overall", "Male", "Female", "Age ≥65", "Age <65")),
+    model = factor(model, levels = c("CARDIAC-FM (ECG + Risk Score)", "CARDIAC-FM (ECG + MRI + Risk Score)"))
+  )
+
+ggplot(df_plot, aes(x = mean, y = Subgroup, color = model, shape = model)) +
+  geom_errorbarh(
+    aes(xmin = lower, xmax = upper),
+    position = position_dodge(width = 0.6),
+    height = 0.2,
+    linewidth = 0.5
+  ) +
+  geom_point(position = position_dodge(width = 0.6), size = 2) +
+  facet_wrap(~label, nrow = 1) +
+  scale_shape_manual(values = c(15, 16)) +
+  scale_color_manual(
+    values = c(
+      "CARDIAC-FM (ECG + Risk Score)" = "#d62728",
+      "CARDIAC-FM (ECG + MRI + Risk Score)" = "#1f77b4"
+    )
+  ) +
+  coord_cartesian(xlim = c(0.55, 0.95)) +
+  labs(x = "AUROC", y = "Subgroup", color = NULL, shape = NULL) +
+  theme_bw(base_size = 16) +
+  theme(
+    axis.title.x = element_text(size = 15, face = "bold"),
+    axis.title.y = element_text(size = 15, face = "bold"),
+    axis.text.x  = element_text(size = 12, face = "bold"),
+    axis.text.y  = element_text(size = 12, face = "bold"),
+    strip.text   = element_text(size = 15, face = "bold"),
+    legend.text  = element_text(size = 10, face = "bold"),
+    legend.position = "bottom",
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor = element_blank()
+  )
+
+```
+
+
+```{r}
+UKBB_subgroup_AUC <- result_long[result_long$metric == "AUC", ]
+write.csv(UKBB_subgroup_AUC, "/Users/fuminli/Desktop/ECG_MRI/result_table/UKBB_subgroup_AUC.csv", row.names = FALSE)
+```

@@ -1,0 +1,581 @@
+---
+title: "Untitled"
+author: "Fumin Li"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#### Run UKBB first
+
+
+```{r}
+MESA <- read.csv("/Users/fuminli/Desktop/ECG_MRI/CHARGE-PREVENT/charge_prevent_MESA.csv")
+```
+
+```{r}
+MESA
+```
+
+
+```{r}
+library(mice)
+
+set.seed(123)
+id <- MESA$idno_visit
+
+dat <- MESA
+dat$idno_visit <- NULL
+
+imp <- mice(
+  dat,
+  m = 4,
+  maxit = 20,
+  seed = 123,
+  printFlag = TRUE
+)
+
+MESA_imp_list <- lapply(1:4, function(i) {
+  out <- complete(imp, action = i)
+  out$idno_visit <- id
+  out <- out[, c("idno_visit", setdiff(colnames(out), "idno_visit"))]
+  out
+})
+
+MESA_imp1 <- MESA_imp_list[[1]]
+MESA_imp2 <- MESA_imp_list[[2]]
+MESA_imp3 <- MESA_imp_list[[3]]
+MESA_imp4 <- MESA_imp_list[[4]]
+```
+
+
+```{r}
+library(dplyr)
+library(pROC)
+MESA_charge1 <- MESA_imp1 %>%
+  mutate(charge_age    = agec/5*0.508,
+         charge_race   = ifelse(racec == 1, 0.465, 0),
+         charge_height = htcm/10*0.248,
+         charge_weight = wtlb/15*0.115,
+         charge_sbp    = sbpc/20*0.197,
+         charge_dbp    = dbpc/10*(-0.101),
+         charge_smk    = ifelse(cigc == 1, 0.359, 0),
+         charge_htnmed = ifelse(htnmedc == 1, 0.349, 0),
+         charge_prevdm = ifelse(dm03c == 1, 0.237, 0),
+         charge_prevhf = ifelse(prevhf == 1, 0.701, 0),
+         charge_prevmi = ifelse(prevmi == 1, 0.496, 0),
+         charge_sum    = charge_age + charge_race + charge_height + charge_weight + charge_sbp + charge_dbp +
+                         charge_smk + charge_htnmed + charge_prevdm + charge_prevhf + charge_prevmi,
+         charge_score  = 1 - 0.9718412736^(charge_sum - 12.5815600)) %>%
+  select(idno_visit, charge_score)
+
+MESA_charge2 <- MESA_imp2 %>%
+  mutate(charge_age    = agec/5*0.508,
+         charge_race   = ifelse(racec == 1, 0.465, 0),
+         charge_height = htcm/10*0.248,
+         charge_weight = wtlb/15*0.115,
+         charge_sbp    = sbpc/20*0.197,
+         charge_dbp    = dbpc/10*(-0.101),
+         charge_smk    = ifelse(cigc == 1, 0.359, 0),
+         charge_htnmed = ifelse(htnmedc == 1, 0.349, 0),
+         charge_prevdm = ifelse(dm03c == 1, 0.237, 0),
+         charge_prevhf = ifelse(prevhf == 1, 0.701, 0),
+         charge_prevmi = ifelse(prevmi == 1, 0.496, 0),
+         charge_sum    = charge_age + charge_race + charge_height + charge_weight + charge_sbp + charge_dbp +
+                         charge_smk + charge_htnmed + charge_prevdm + charge_prevhf + charge_prevmi,
+         charge_score  = 1 - 0.9718412736^(charge_sum - 12.5815600)) %>%
+  select(idno_visit, charge_score)
+
+MESA_charge3 <- MESA_imp3 %>%
+  mutate(charge_age    = agec/5*0.508,
+         charge_race   = ifelse(racec == 1, 0.465, 0),
+         charge_height = htcm/10*0.248,
+         charge_weight = wtlb/15*0.115,
+         charge_sbp    = sbpc/20*0.197,
+         charge_dbp    = dbpc/10*(-0.101),
+         charge_smk    = ifelse(cigc == 1, 0.359, 0),
+         charge_htnmed = ifelse(htnmedc == 1, 0.349, 0),
+         charge_prevdm = ifelse(dm03c == 1, 0.237, 0),
+         charge_prevhf = ifelse(prevhf == 1, 0.701, 0),
+         charge_prevmi = ifelse(prevmi == 1, 0.496, 0),
+         charge_sum    = charge_age + charge_race + charge_height + charge_weight + charge_sbp + charge_dbp +
+                         charge_smk + charge_htnmed + charge_prevdm + charge_prevhf + charge_prevmi,
+         charge_score  = 1 - 0.9718412736^(charge_sum - 12.5815600)) %>%
+  select(idno_visit, charge_score)
+
+MESA_charge4 <- MESA_imp4 %>%
+  mutate(charge_age    = agec/5*0.508,
+         charge_race   = ifelse(racec == 1, 0.465, 0),
+         charge_height = htcm/10*0.248,
+         charge_weight = wtlb/15*0.115,
+         charge_sbp    = sbpc/20*0.197,
+         charge_dbp    = dbpc/10*(-0.101),
+         charge_smk    = ifelse(cigc == 1, 0.359, 0),
+         charge_htnmed = ifelse(htnmedc == 1, 0.349, 0),
+         charge_prevdm = ifelse(dm03c == 1, 0.237, 0),
+         charge_prevhf = ifelse(prevhf == 1, 0.701, 0),
+         charge_prevmi = ifelse(prevmi == 1, 0.496, 0),
+         charge_sum    = charge_age + charge_race + charge_height + charge_weight + charge_sbp + charge_dbp +
+                         charge_smk + charge_htnmed + charge_prevdm + charge_prevhf + charge_prevmi,
+         charge_score  = 1 - 0.9718412736^(charge_sum - 12.5815600)) %>%
+  select(idno_visit, charge_score)
+```
+
+
+```{r}
+MESA_stage1 <- read.csv("/Users/fuminli/Desktop/ECG_MRI/MESA/MESA_stage1_pred.csv")
+MESA_stage1
+```
+```{r}
+library(dplyr)
+
+make_MESA <- function(k) {
+  MESA_stage1 %>%
+    select(
+      idno_visit,
+      af5_true,
+      paste0("af5_0_ECGstage1_downstream_pred", k),
+      paste0("af5_10_ECGstage1_downstream_pred", k),
+      paste0("af5_20_ECGstage1_downstream_pred", k)
+    ) %>%
+    rename(
+      id     = idno_visit,
+      af5_0  = paste0("af5_0_ECGstage1_downstream_pred", k),
+      af5_10 = paste0("af5_10_ECGstage1_downstream_pred", k),
+      af5_20 = paste0("af5_20_ECGstage1_downstream_pred", k),
+      y_true = af5_true
+    )
+}
+
+MESA1 <- make_MESA(1)
+MESA2 <- make_MESA(2)
+MESA3 <- make_MESA(3)
+MESA4 <- make_MESA(4)
+
+```
+
+
+
+
+```{r}
+MESA1 <- merge(
+  MESA1,
+  MESA_charge1,
+  by.x = "id",
+  by.y = "idno_visit",
+  all.x = TRUE
+)
+
+MESA2 <- merge(
+  MESA2,
+  MESA_charge2,
+  by.x = "id",
+  by.y = "idno_visit",
+  all.x = TRUE
+)
+
+MESA3 <- merge(
+  MESA3,
+  MESA_charge3,
+  by.x = "id",
+  by.y = "idno_visit",
+  all.x = TRUE
+)
+
+MESA4 <- merge(
+  MESA4,
+  MESA_charge4,
+  by.x = "id",
+  by.y = "idno_visit",
+  all.x = TRUE
+)
+
+```
+
+```{r}
+MESA1
+```
+
+
+```{r}
+UKBB_train <- read.csv("/Users/fuminli/Desktop/ECG_MRI/CHARGE-PREVENT/UKBB_train.csv")
+colnames(UKBB_train)[1] <- "eid_visit"
+UKBB_train$eid_visit <- sub("\\.mat$", "", UKBB_train$eid_visit)
+
+UKBB_train <- UKBB_train %>%
+  left_join(
+    UKBB_charge1 %>% 
+      select(eid_visit, charge_pred1 = charge_score),
+    by = "eid_visit"
+  )
+UKBB_train <- UKBB_train %>%
+  left_join(
+    UKBB_charge2 %>% 
+      select(eid_visit, charge_pred2 = charge_score),
+    by = "eid_visit"
+  )
+UKBB_train <- UKBB_train %>%
+  left_join(
+    UKBB_charge3 %>% 
+      select(eid_visit, charge_pred3 = charge_score),
+    by = "eid_visit"
+  )
+UKBB_train <- UKBB_train %>%
+  left_join(
+    UKBB_charge4 %>% 
+      select(eid_visit, charge_pred4 = charge_score),
+    by = "eid_visit"
+  )
+```
+
+
+
+```{r}
+UKBB_train1 <- UKBB_train %>%
+  select(af, af1_pred, charge_pred1) %>%
+  na.omit()
+
+UKBB_train2 <- UKBB_train %>%
+  select(af, af2_pred, charge_pred2) %>%
+  na.omit()
+
+UKBB_train3 <- UKBB_train %>%
+  select(af, af3_pred, charge_pred3) %>%
+  na.omit()
+
+UKBB_train4 <- UKBB_train %>%
+  select(af, af4_pred, charge_pred4) %>%
+  na.omit()
+
+```
+
+
+```{r}
+for (v in 1:4){
+  fit <- glm(
+      as.formula(paste0("af ~ af", v, "_pred + charge_pred", v)),
+      data = get(paste0("UKBB_train", v)),
+      family = binomial(link = "logit")
+    )
+  for (ratio in c(0, 10, 20)) {
+
+    df_eval <- get(paste0("MESA", v))[
+      , c(paste0("af5_", ratio), "charge_score")
+    ]
+
+    mesa_name <- paste0("MESA", v)
+    mesa_df <- get(mesa_name)
+
+    newdata <- data.frame(
+      setNames(list(mesa_df[[paste0("af5_", ratio)]]), paste0("af", v, "_pred")),
+      setNames(list(mesa_df[["charge_score"]]), paste0("charge_pred", v))
+    )
+
+    mesa_df[[paste0("combined_pred", ratio)]] <- predict(fit, newdata = newdata, type = "response")
+    assign(mesa_name, mesa_df)
+
+  }
+  out_dir <- paste0(
+    "/Users/fuminli/Desktop/ECG_MRI/csv_train_valid_test_individual_temp/",
+    "split", v, "/MESA/CHARGE_PREVENT"
+  )
+  if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)
+
+  df_out1<- mesa_df %>%
+    dplyr::select(y_true, charge_score) %>%
+    dplyr::rename(
+      y_true = y_true,
+      y_pred = charge_score
+    ) %>%
+    na.omit()
+
+  write.csv(df_out1, file.path(out_dir, "test_af5.csv"), row.names = FALSE)
+
+
+  df_out2 <- mesa_df %>%
+    dplyr::select(y_true, combined_pred0) %>%
+    dplyr::rename(
+      y_true = y_true,
+      y_pred = combined_pred0
+    ) %>%
+    na.omit()
+
+  write.csv(df_out2, file.path(out_dir, "test_af5_cardiacfm0.csv"), row.names = FALSE)
+
+  df_out3 <- mesa_df %>%
+    dplyr::select(y_true, combined_pred10) %>%
+    dplyr::rename(
+      y_true = y_true,
+      y_pred = combined_pred10
+    ) %>%
+    na.omit()
+
+  write.csv(df_out3, file.path(out_dir, "test_af5_cardiacfm10.csv"), row.names = FALSE)
+
+  df_out4 <- mesa_df %>%
+    dplyr::select(y_true, combined_pred20) %>%
+    dplyr::rename(
+      y_true = y_true,
+      y_pred = combined_pred20
+    ) %>%
+    na.omit()
+
+  write.csv(df_out4, file.path(out_dir, "test_af5_cardiacfm20.csv"), row.names = FALSE)
+
+}
+```
+
+
+
+
+```{r}
+model_map <- c(
+  af5_0 = "CARDIAC-FM (0%)",
+  af5_10 = "CARDIAC-FM (10%)",
+  af5_20 = "CARDIAC-FM (20%)",
+  charge_score = "CHARGE-AF",
+  combined_pred0 = "CARDIAC-FM + CHARGE-AF (0%)",
+  combined_pred10 = "CARDIAC-FM + CHARGE-AF (10%)",
+  combined_pred20 = "CARDIAC-FM + CHARGE-AF (20%)"
+)
+
+auc_summary <- list()
+
+for (v in 1:4) {
+
+  mesa_df <- get(paste0("MESA", v))
+
+  for (col in names(model_map)) {
+
+    df_tmp <- mesa_df %>%
+      select(y_true, all_of(col)) %>%
+      na.omit()
+
+    auc_val <- auc(df_tmp$y_true, df_tmp[[col]])
+
+    auc_summary[[length(auc_summary) + 1]] <- data.frame(
+      MESA = paste0("MESA", v),
+      model = model_map[[col]],
+      auc = as.numeric(auc_val)
+    )
+  }
+}
+
+auc_summary_df <- bind_rows(auc_summary)
+auc_mean_df <- auc_summary_df %>%
+  group_by(model) %>%
+  summarise(
+    mean_auc = mean(auc),
+    .groups = "drop"
+  )
+auc_mean_df
+
+```
+
+##### ECG-FM + CHARGE-AF
+
+
+```{r}
+MESA1 <- MESA1[,1:6]
+MESA2 <- MESA1
+MESA3 <- MESA1
+MESA4 <- MESA1
+idx  <- which(!is.na(MESA1$y_true))
+```
+
+```{r}
+for (v in 1:4) {
+  ecgfm0  <- read.csv(paste0(
+    "/Users/fuminli/Desktop/ECG_MRI/csv_train_valid_test_individual_temp/split",
+    v, "/MESA/ECGFM_downstream/test_af5_long_full_0.csv"
+  ))
+  ecgfm10 <- read.csv(paste0(
+    "/Users/fuminli/Desktop/ECG_MRI/csv_train_valid_test_individual_temp/split",
+    v, "/MESA/ECGFM_downstream/test_af5_long_full_10.csv"
+  ))
+  ecgfm20 <- read.csv(paste0(
+    "/Users/fuminli/Desktop/ECG_MRI/csv_train_valid_test_individual_temp/split",
+    v, "/MESA/ECGFM_downstream/test_af5_long_full_20.csv"
+  ))
+  mesa_name <- paste0("MESA", v)
+  mesa_df   <- get(mesa_name)
+
+  idx <- which(!is.na(mesa_df$af5_0))
+
+  stopifnot(
+    length(idx) == nrow(ecgfm0),
+    length(idx) == nrow(ecgfm10),
+    length(idx) == nrow(ecgfm20)
+  )
+
+  mesa_df$af5_0[idx]  <- ecgfm0$y_pred
+  mesa_df$af5_10[idx] <- ecgfm10$y_pred
+  mesa_df$af5_20[idx] <- ecgfm20$y_pred
+
+  assign(mesa_name, mesa_df)
+}
+```
+
+```{r}
+UKBB_train <- read.csv("/Users/fuminli/Desktop/ECG_MRI/CHARGE-PREVENT/UKBB_train_ecgfm.csv")
+colnames(UKBB_train)[1] <- "eid_visit"
+UKBB_train$eid_visit <- sub("\\.mat$", "", UKBB_train$eid_visit)
+
+UKBB_train <- UKBB_train %>%
+  left_join(
+    UKBB_charge1 %>% 
+      select(eid_visit, charge_pred1 = charge_score),
+    by = "eid_visit"
+  )
+UKBB_train <- UKBB_train %>%
+  left_join(
+    UKBB_charge2 %>% 
+      select(eid_visit, charge_pred2 = charge_score),
+    by = "eid_visit"
+  )
+UKBB_train <- UKBB_train %>%
+  left_join(
+    UKBB_charge3 %>% 
+      select(eid_visit, charge_pred3 = charge_score),
+    by = "eid_visit"
+  )
+UKBB_train <- UKBB_train %>%
+  left_join(
+    UKBB_charge4 %>% 
+      select(eid_visit, charge_pred4 = charge_score),
+    by = "eid_visit"
+  )
+```
+
+
+
+```{r}
+UKBB_train1 <- UKBB_train %>%
+  select(af, af1_pred, charge_pred1) %>%
+  na.omit()
+
+UKBB_train2 <- UKBB_train %>%
+  select(af, af2_pred, charge_pred2) %>%
+  na.omit()
+
+UKBB_train3 <- UKBB_train %>%
+  select(af, af3_pred, charge_pred3) %>%
+  na.omit()
+
+UKBB_train4 <- UKBB_train %>%
+  select(af, af4_pred, charge_pred4) %>%
+  na.omit()
+
+```
+
+
+```{r}
+for (v in 1:4){
+  fit <- glm(
+      as.formula(paste0("af ~ af", v, "_pred + charge_pred", v)),
+      data = get(paste0("UKBB_train", v)),
+      family = binomial(link = "logit")
+    )
+  for (ratio in c(0, 10, 20)) {
+
+    df_eval <- get(paste0("MESA", v))[
+      , c(paste0("af5_", ratio), "charge_score")
+    ]
+
+    mesa_name <- paste0("MESA", v)
+    mesa_df <- get(mesa_name)
+
+    newdata <- data.frame(
+      setNames(list(mesa_df[[paste0("af5_", ratio)]]), paste0("af", v, "_pred")),
+      setNames(list(mesa_df[["charge_score"]]), paste0("charge_pred", v))
+    )
+
+    mesa_df[[paste0("combined_pred", ratio)]] <- predict(fit, newdata = newdata, type = "response")
+    assign(mesa_name, mesa_df)
+
+  }
+    out_dir <- paste0(
+    "/Users/fuminli/Desktop/ECG_MRI/csv_train_valid_test_individual_temp/",
+    "split", v, "/MESA/CHARGE_PREVENT"
+  )
+  if (!dir.exists(out_dir)) dir.create(out_dir, recursive = TRUE)
+
+  df_out2 <- mesa_df %>%
+    dplyr::select(y_true, combined_pred0) %>%
+    dplyr::rename(
+      y_true = y_true,
+      y_pred = combined_pred0
+    ) %>%
+    na.omit()
+
+  write.csv(df_out2, file.path(out_dir, "test_af5_ecgfm0.csv"), row.names = FALSE)
+
+  df_out3 <- mesa_df %>%
+    dplyr::select(y_true, combined_pred10) %>%
+    dplyr::rename(
+      y_true = y_true,
+      y_pred = combined_pred10
+    ) %>%
+    na.omit()
+
+  write.csv(df_out3, file.path(out_dir, "test_af5_ecgfm10.csv"), row.names = FALSE)
+
+  df_out4 <- mesa_df %>%
+    dplyr::select(y_true, combined_pred20) %>%
+    dplyr::rename(
+      y_true = y_true,
+      y_pred = combined_pred20
+    ) %>%
+    na.omit()
+
+  write.csv(df_out4, file.path(out_dir, "test_af5_ecgfm20.csv"), row.names = FALSE)
+}
+```
+
+```{r}
+model_map <- c(
+  af5_0 = "ECG-FM (0%)",
+  af5_10 = "ECG-FM (10%)",
+  af5_20 = "ECG-FM (20%)",
+  charge_score = "CHARGE-AF",
+  combined_pred0 = "ECG-FM + CHARGE-AF (0%)",
+  combined_pred10 = "ECG-FM + CHARGE-AF (10%)",
+  combined_pred20 = "ECG-FM + CHARGE-AF (20%)"
+)
+
+auc_summary <- list()
+
+for (v in 1:4) {
+
+  mesa_df <- get(paste0("MESA", v))
+
+  for (col in names(model_map)) {
+
+    df_tmp <- mesa_df %>%
+      select(y_true, all_of(col)) %>%
+      na.omit()
+
+    auc_val <- auc(df_tmp$y_true, df_tmp[[col]])
+
+    auc_summary[[length(auc_summary) + 1]] <- data.frame(
+      MESA = paste0("MESA", v),
+      model = model_map[[col]],
+      auc = as.numeric(auc_val)
+    )
+  }
+}
+
+auc_summary_df <- bind_rows(auc_summary)
+auc_mean_df <- auc_summary_df %>%
+  group_by(model) %>%
+  summarise(
+    mean_auc = mean(auc),
+    .groups = "drop"
+  )
+auc_mean_df
+
+```
+
