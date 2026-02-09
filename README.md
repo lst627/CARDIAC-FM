@@ -18,7 +18,7 @@ conda create -n cardiac python=3.9.21
 conda activate cardiac
 python3 -m pip install pip==24.0
 
-pip install torch==1.11.0+cu113 torchvision==0.12.0+cu113   --extra-index-url https://download.pytorch.org/whl/cu113
+pip install torch==1.11.0+cu102 torchvision==0.12.0+cu102   --extra-index-url https://download.pytorch.org/whl/cu102
 pip install -r requirements.txt
 
 cd cardiac_fm/fairseq_signals
