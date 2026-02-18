@@ -67,10 +67,10 @@ def transform_test_per_channel(image):
 
 
 class mydataset(Dataset):
-    def __init__(self, data_dir, datapath, weighted_sampling=False, split="train", skipped_indices = None):
+    def __init__(self, data_dir, datapath, weighted_sampling=False, split="train", skipped_indices = None, dry_run=False):
         df = pd.read_csv(datapath)
         df = df[~df["eid_visit"].isin(skipped_indices)]
-        n = len(df) 
+        n = len(df) if not dry_run else min(100, len(df))
 
         print(f"Total {split} data:", n)
         print(f"Loading {split} data ...")
@@ -180,7 +180,7 @@ def crop_to_max_size(sample, target_size, rand=False):
         return (data - mean) / std
 
 class ECGMRIDataset(torch.utils.data.Dataset):
-    def __init__(self, csv_path, ecg_dir, mri_dir, labels_dir=None, mask=None, split="train"):
+    def __init__(self, csv_path, ecg_dir, mri_dir, labels_dir=None, mask=None, split="train", dry_run=False):
         """
         Custom Dataset for loading ECG and MRI data.
 
@@ -195,6 +195,7 @@ class ECGMRIDataset(torch.utils.data.Dataset):
         self.mri_dir = mri_dir
         self.mask = mask
         self.label = labels_dir != None
+        self.dry_run = dry_run
         # The hyperparameter is from fairseq-signals/examples/w2v_cmsc/config/finetuning/ecg_transformer/physionet_finetuned.yaml
         
         manifest_path = os.path.join(ecg_dir, "{}.tsv".format(split)) 
@@ -218,13 +219,15 @@ class ECGMRIDataset(torch.utils.data.Dataset):
                 leads_bucket=None,
                 bucket_selection="uniform",
                 training=True if 'train' in split else False,
+                dry_run=dry_run
             )
         ## NOTE: We changed this line for 3+3!
         self.mri_data = mydataset( 
                 data_dir=mri_dir, 
                 datapath=csv_path, 
                 split=split,
-                skipped_indices=self.ecg_data.skipped_indices
+                skipped_indices=self.ecg_data.skipped_indices,
+                dry_run=self.dry_run
         )
 
     def __len__(self):

@@ -423,6 +423,8 @@ class FileECGDataset(RawECGDataset):
         with open(manifest_path, "r") as f:
             self.root_dir = f.readline().strip()
             for i, line in tqdm(enumerate(f)):
+                if i > 100 and hasattr(self, "dry_run") and self.dry_run:
+                    break
                 items = line.strip().split("\t")
                 assert len(items) == 2, line
                 sz = int(items[1])

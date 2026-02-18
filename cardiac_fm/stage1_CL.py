@@ -89,8 +89,8 @@ def train_clip(args):
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
-    trainset = ECGMRIDataset(csv_train_file, ecgs_dir, mris_dir, split="train")
-    testset = ECGMRIDataset(csv_test_file, ecgs_dir, mris_dir, split="valid")
+    trainset = ECGMRIDataset(csv_train_file, ecgs_dir, mris_dir, split="train", dry_run=args.dry_run)
+    testset = ECGMRIDataset(csv_test_file, ecgs_dir, mris_dir, split="valid", dry_run=args.dry_run)
     trainloader = DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=4, collate_fn=ECGMRIDataset.collate_fn)
     testloader = DataLoader(testset, batch_size=batch_size, shuffle=False, num_workers=4, collate_fn=ECGMRIDataset.collate_fn)
 
@@ -162,6 +162,7 @@ if __name__=="__main__":
     parser.add_argument('--pt_mri_path', type=str, default='', help='Path to pretrained MRI model')
     parser.add_argument('--pt_ecg_path', type=str, default='', help='Path to pretrained ECG model')
     parser.add_argument('--wandb', action='store_true', help='Use wandb for logging')
+    parser.add_argument('--dry_run', action='store_true', help='Dry run with a subset of data for quick testing')
 
     args = parser.parse_args()
     if args.wandb:
@@ -170,5 +171,3 @@ if __name__=="__main__":
             name=f"Training-bs{args.batch_size}-lr{args.lr:g}-ep{args.epochs}"
         )
     train_clip(args)
-
-# python stage1_CL.py --lr 1e-4 --epochs 20 --batch_size 32 
