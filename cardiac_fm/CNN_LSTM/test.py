@@ -105,7 +105,7 @@ class mydataset(torch.utils.data.Dataset):
         self.num = 13   # number of sampled frames 
 
         # for i in range(len(self.sequence)):
-        root_dir = '/chru/analysis/lifm6/crop_data'
+        root_dir = your_cropped_mri_path
         for i in tqdm(range(n)):
             eid_visit = df.iloc[i]['eid_visit']
             mri_label = 1 if df.iloc[i]['LVEF'] > 60 else 0
@@ -457,6 +457,6 @@ def run(disease, test_sax):
             df.to_csv(output_path + out_csv_name, index=False)
 
 
-test_data = '/chru/analysis/sitingli/val_set.csv'
+test_data = your_test_data_path
 run(['abnor', 'nor'], test_data)
 cleanup()

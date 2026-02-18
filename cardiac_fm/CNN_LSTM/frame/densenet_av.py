@@ -3,10 +3,11 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from os.path import dirname, join
+import os
 
-
+WEIGHTS_PATH = os.environ.get('WEIGHTS_PATH', '')
 #Implementation based on https://github.com/andreasveit/densenet-pytorch
-densenet_40_12_bc_weights_path = join(dirname(__file__), "pretrained_densenet_4012BC.pth.tar")
+densenet_40_12_bc_weights_path = join(WEIGHTS_PATH, "pretrained_densenet_4012BC.pth.tar")
 
 def densenet_40_12_bc(pretrained=True, requires_grad=False, **kwargs):
     layers=40

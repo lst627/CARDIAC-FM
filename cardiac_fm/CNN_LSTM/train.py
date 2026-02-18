@@ -110,7 +110,7 @@ class mydataset(torch.utils.data.Dataset):
         self.num = 13   # number of sampled frames 
 
         # for i in range(len(self.sequence)):
-        root_dir = '/chru/analysis/lifm6/crop_data'
+        root_dir = your_cropped_mri_path
         for i in tqdm(range(n)):
             eid_visit = df.iloc[i]['eid_visit']
             
@@ -595,9 +595,8 @@ def run(disease, train_sax, test_sax):
         except:
             pass
 
-# change this to '/chru/analysis/sitingli/train_df_clean.csv' if you do not want to balance the positive and negative samples
-train_data = '/chru/analysis/sitingli/train_df_clean_balanced.csv'  
-test_data = '/chru/analysis/sitingli/val_df_clean.csv'
+train_data = your_train_data_path
+test_data = your_test_data_path
 run(['abnor', 'nor'], train_data, test_data)
 cleanup()
 
