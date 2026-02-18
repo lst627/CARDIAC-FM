@@ -10,7 +10,7 @@ from PIL import Image
 import random
 import torchvision.transforms.functional as tf
 
-from fairseq_signals.fairseq_signals.data.ecg.raw_ecg_dataset import FileECGDataset
+from fairseq_signals.data.ecg.raw_ecg_dataset import FileECGDataset
 
 def transform_train_per_channel(image):
     angle = transforms.RandomRotation.get_params([-90, 90])

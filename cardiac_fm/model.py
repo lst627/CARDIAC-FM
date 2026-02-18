@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 from utils import Dense4012FrameRNN, Dense4012FrameRNN_3slices, Three_plus_three_cnn_lstm
-from fairseq_signals.fairseq_signals.models import build_model_from_checkpoint
+from fairseq_signals.models import build_model_from_checkpoint
 
 class MMCL(nn.Module):
     def __init__(self, mri_ckpt=None, ecg_ckpt=None):
