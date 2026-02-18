@@ -33,7 +33,11 @@ python -c "import numpy, pandas, nibabel, wfdb, torch, torchvision, fairseq_sign
 ## Finetuning
 
 ## Training
-
+After filling in the paths for data and model weights in scripts/stage1.sh, you can use 
+```bash
+bash scripts/stage1.sh
+```
+for Stage 1 training. Note that (1) `--dry_run` is for testing the pipeline and will only use 100 samples for training, and (2) `--wandb` is for tracking the loss curves on wandb, which is not required in your training. Please remove `--dry_run` in actual training.
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
