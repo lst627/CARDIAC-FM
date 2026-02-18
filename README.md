@@ -21,7 +21,7 @@ python3 -m pip install pip==24.0
 pip install torch==1.11.0+cu102 torchvision==0.12.0+cu102   --extra-index-url https://download.pytorch.org/whl/cu102
 pip install -r requirements.txt
 
-cd cardiac_fm/fairseq_signals
+cd cardiac_fm/fairseq_signals_repo
 pip install --editable ./
 ```
 To test if installation of some packages is successful:
