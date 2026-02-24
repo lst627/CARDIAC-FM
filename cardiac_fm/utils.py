@@ -205,7 +205,7 @@ class Dense4012FrameRNN(MRISequenceNet):
         return frm_output_size
 
 class Dense4012FrameRNN_3slices(MRISequenceNet):
-    def __init__(self, n_classes, use_cuda, **kwargs):
+    def __init__(self, densenet_ckpt, n_classes, use_cuda, **kwargs):
         super(Dense4012FrameRNN_3slices, self).__init__(frame_encoder=None, seq_encoder=None, use_cuda=use_cuda)
 
         self.name = "Dense4012FrameRNN"
@@ -220,7 +220,7 @@ class Dense4012FrameRNN_3slices(MRISequenceNet):
         pretrained = kwargs.get("pretrained", True)
         requires_grad = kwargs.get("requires_grad", True)
 
-        self.fenc, _ = densenet_40_12_bc_3slices(pretrained=pretrained, requires_grad=requires_grad)
+        self.fenc, _ = densenet_40_12_bc_3slices(densenet_ckpt, pretrained=pretrained, requires_grad=requires_grad)
         frm_output_size = self.get_frm_output_size(input_shape)
         # print(input_shape)
         # print(frm_output_size)
@@ -248,11 +248,11 @@ class Three_plus_three_cnn_lstm(nn.Module):
         dropout_rate (float, optional): Dropout probability to prevent overfitting. Default: 0.2.
         label_weights (bool, optional): Whether to apply label weighting in the loss function. Default: False.
     """
-    def __init__(self):
+    def __init__(self, densenet_ckpt):
         super(Three_plus_three_cnn_lstm, self).__init__()
 
-        self.mri_encoder1 = Dense4012FrameRNN_3slices(2, True)
-        self.mri_encoder2 = Dense4012FrameRNN_3slices(2, True)
+        self.mri_encoder1 = Dense4012FrameRNN_3slices(densenet_ckpt, 2, True)
+        self.mri_encoder2 = Dense4012FrameRNN_3slices(densenet_ckpt, 2, True)
         self.classifier = nn.Linear(4, 2)
     
 

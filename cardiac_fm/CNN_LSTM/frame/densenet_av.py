@@ -5,9 +5,9 @@ import torch.nn.functional as F
 from os.path import dirname, join
 import os
 
-WEIGHTS_PATH = os.environ.get('WEIGHTS_PATH', '')
+#WEIGHTS_PATH = os.environ.get('WEIGHTS_PATH', '')
 #Implementation based on https://github.com/andreasveit/densenet-pytorch
-densenet_40_12_bc_weights_path = join(WEIGHTS_PATH, "pretrained_densenet_4012BC.pth.tar")
+#densenet_40_12_bc_weights_path = join(WEIGHTS_PATH, "pretrained_densenet_4012BC.pth.tar")
 
 def densenet_40_12_bc(pretrained=True, requires_grad=False, **kwargs):
     layers=40
@@ -31,7 +31,7 @@ def densenet_40_12_bc(pretrained=True, requires_grad=False, **kwargs):
     
     return model, in_planes
 
-def densenet_40_12_bc_3slices(pretrained=True, requires_grad=False, **kwargs):
+def densenet_40_12_bc_3slices(densenet_ckpt, pretrained=True, requires_grad=False, **kwargs):
     layers=40
     depth=10
     growth_rate=12
@@ -43,7 +43,7 @@ def densenet_40_12_bc_3slices(pretrained=True, requires_grad=False, **kwargs):
                          dropRate=drop_rate)
     in_planes = model.in_planes
     if pretrained:
-        checkpoint = torch.load(densenet_40_12_bc_weights_path, map_location=torch.device('cpu'))
+        checkpoint = torch.load(densenet_ckpt, map_location=torch.device('cpu'))
         model.load_state_dict(checkpoint['state_dict'])
         model.requires_grad = requires_grad
    

@@ -10,10 +10,11 @@ import numpy as np
 from model import CARDIACFM_ECGMRI
 from utils import cosine_lr
 from dataset import ECGMRIDataset
-import wandb
+#import wandb
 from sklearn.metrics import roc_auc_score
 import argparse
 import random
+import torch.multiprocessing as mp
 mp.set_sharing_strategy("file_system")
 
 def log_metrics(epoch, train_loss, val_loss, lr, val_auc):
@@ -140,7 +141,7 @@ def train_clip(batch_size, epochs, args):
     """
     Model and Loss
     """
-    model = CARDIACFM_ECGMRI(ecgfm_ckpt=args.ecgfm_ckpt, cardiacfm_pretrained_ckpt = args.cardiacfm_pretrained_ckpt, device=device)
+    model = CARDIACFM_ECGMRI(ecgfm_ckpt=args.ecgfm_ckpt, densenet_ckpt=args.densenet_ckpt, cardiacfm_pretrained_ckpt = args.cardiacfm_pretrained_ckpt, device=device)
     model.to(device)
 
     if args.finetuned_ckpt != '':
@@ -234,28 +235,16 @@ if __name__=="__main__":
     parser.add_argument('--mris_csv_dir', type=str, default='', help='Path to mris csv dir')
     parser.add_argument('--ecg_tsv_dir', type=str, default='', help='Path to ecgs tsv dir')
     parser.add_argument('--ecgfm_ckpt', type=str, default='', help='Path to ecgfm model')
+    parser.add_argument('--densenet_ckpt', type=str, default='', help='Path to cnnlstm model')
     parser.add_argument('--save_dir', type=str, help='Path to dir used to save model')
     parser.add_argument('--cardiacfm_pretrained_ckpt', type=str, help='contrastive pretrained weight, use this when you want to finetune based on contrastive pretrained weight.')
     parser.add_argument('--finetuned_ckpt', type=str, default='', help='Path to cardiacfm model, use this when you want ot finetune based on the model already finetuned on UKB')
     args = parser.parse_args()
     set_seed(args.seed)
     
-    #wandb.init(
-        #project="ecgmri_downstream",
-        #name=f"ecgmri_{args.label}_{args.length}_{args.type}_tracking_stage2",
-        #config={
-            #"epochs": epochs,
-            #"batch_size": batch_size,
-            #"optimizer": "AdamW",
-            #"learning_rate": 5e-4,
-            #"model": "Dense4012FrameRNN",
-            #"frame_encoder": "densenet_40_12_bc",
-            #"sequence_encoder": "LSTM"
-        #}
-    #)
     
         
-    train_clip(batch_size=4, epochs=args.epochs, args=args)
+    train_clip(batch_size=4, epochs=args.epochs, args=args) 
 
 
 

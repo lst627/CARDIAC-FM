@@ -10,11 +10,12 @@ import numpy as np
 from model import ECGFM, CARDIACFM_ECG
 from utils import cosine_lr
 from dataset import ECGDataset
-import wandb
+#import wandb
 from sklearn.metrics import roc_auc_score
 import argparse
 import random
 from glob import glob
+import torch.multiprocessing as mp
 mp.set_sharing_strategy("file_system")
 
 def log_metrics(epoch, train_loss, val_loss, lr, val_auc):
@@ -250,19 +251,5 @@ if __name__=="__main__":
     set_seed(args.seed)
         
     train_clip(batch_size=4, epochs=args.epochs, args=args)
-
-    #wandb.init(
-        #project="ecg_downstream",
-        #name=f"ecg_{args.label}_{args.length}_{args.type}_tracking_stage1",
-        #config={
-            #"epochs": epochs,
-            #"batch_size": batch_size,
-            #"optimizer": "AdamW",
-            #"learning_rate": 5e-4,
-            #"model": "Dense4012FrameRNN",
-            #"frame_encoder": "densenet_40_12_bc",
-            #"sequence_encoder": "LSTM"
-        #}
-    #)
 
                           

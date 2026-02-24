@@ -10,10 +10,11 @@ import numpy as np
 from model import ECGFM, CARDIACFM_ECG
 from utils import cosine_lr
 from dataset import ECGDataset
-import wandb
+#import wandb
 from sklearn.metrics import roc_auc_score
 import argparse
 import random
+import torch.multiprocessing as mp
 mp.set_sharing_strategy("file_system")
 
 from scipy.stats import pearsonr
@@ -150,6 +151,7 @@ def train_clip(batch_size, epochs, args):
         ckpt_path = args.finetuned_ckpt
         print(ckpt_path)
         checkpoint = torch.load(ckpt_path)
+        model.load_state_dict(checkpoint)
         
     print("\n\n\n\n\t Model Loaded")
     print("\t Total Params = ",sum(p.numel() for p in model.parameters()))
@@ -241,7 +243,7 @@ def set_seed(seed: int):
     
 if __name__=="__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--seed', type=int, help='Seed')
+    parser.add_argument('--seed', type=int, default=1, help='Seed')
     parser.add_argument('--epochs', type=int, help='Number of epochs')
     parser.add_argument('--model_name', type=str, help='Model Name, ECGFM or CARDIACFM')
     parser.add_argument('--label_dir', type=str, help='Path to downstream task label')
@@ -254,20 +256,6 @@ if __name__=="__main__":
     set_seed(args.seed)
         
     train_clip(batch_size=4, epochs=args.epochs, args=args)
-    
-    #wandb.init(
-        #project="ecg_downstream",
-        #name=f"ecg_{args.label}_{args.length}_{args.type}_tracking_stage1",
-        #config={
-            #"epochs": epochs,
-            #"batch_size": batch_size,
-            #"optimizer": "AdamW",
-            #"learning_rate": 5e-4,
-            #"model": "Dense4012FrameRNN",
-            #"frame_encoder": "densenet_40_12_bc",
-            #"sequence_encoder": "LSTM"
-        #}
-    #)
 
-                          
+
 

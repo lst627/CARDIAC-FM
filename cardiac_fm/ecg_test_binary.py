@@ -4,22 +4,54 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-import wandb
 import time
 import numpy as np
-from model import ECGFM, CARDIACFM_ECG
+from model import ECGFM, CARDIACFM_ECG, CHARGE_AF, CARDIACFM_ECG_Risk_AF, PREVENT_HF, CARDIACFM_ECG_Risk_HF
 from utils import cosine_lr
 from dataset import ECGDataset
 from sklearn.metrics import roc_auc_score
 import argparse
 import pandas as pd
 from glob import glob
+from scipy.io import loadmat
+import torch.multiprocessing as mp
 mp.set_sharing_strategy("file_system")
 
+def build_result(result):
+    
+    ecg_tsv_path = f"{args.ecg_tsv_dir}/test.tsv"
+    ecg_tsv = pd.read_csv(ecg_tsv_path, sep="\t")
+    
+    label_path = f"{args.label_dir}/y.npy"
+    label = np.load(label_path).squeeze()
+    
+    mat_dir = ecg_tsv.columns[1]
+
+    idx_list = []
+    y_true = []
+
+    for i in range(len(ecg_tsv)):
+        mat_path = os.path.join(mat_dir, ecg_tsv.iloc[i, 0])
+        mat = loadmat(mat_path)
+        idx = int(mat["idx"].squeeze())
+        idx_list.append(idx)
+        y_true.append(label[idx])
+
+    ecg_tsv["idx"] = idx_list
+    ecg_tsv["y_true"] = y_true
+
+    mask = ecg_tsv["y_true"].notna()
+    ecg_tsv.loc[mask, "y_pred"] = result["y_pred"].values
+
+    result_df = ecg_tsv.iloc[:, [0, 3, 4]].copy()
+    result_df.columns = ["id", "y_true", "y_pred"]
+    result_df["id"] = result_df["id"].str.replace(".mat", "", regex=False)
+
+    return result_df
+    
 def val_one_epoch(val_data_loader, model, loss_fn, device):
     
     ### Local Parameters
-    epoch_loss = []
     y_true_all = []
     y_pred_all = []
 
@@ -47,21 +79,40 @@ def val_one_epoch(val_data_loader, model, loss_fn, device):
             y_pred, labels = y_pred[mask], labels[mask]  
         
             _loss = loss_fn(y_pred, labels)
-            epoch_loss.append(_loss)
             
             y_true_all.extend(labels.cpu().numpy()) 
             y_pred_all.extend(y_pred.cpu().numpy())  
 
-    epoch_loss = np.mean([l.cpu().item() for l in epoch_loss])
-    epoch_auc = roc_auc_score(y_true_all, y_pred_all)
     df = pd.DataFrame({'y_true': y_true_all, 'y_pred': y_pred_all})
     
     save_path = os.path.join(args.save_dir, "result.csv")
 
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
-    df.to_csv(save_path, index=False)
-    return epoch_loss, epoch_auc
 
+    df = build_result(df)
+
+    #### Risk Model
+
+    if args.risk_path != '':
+        risk_factors = pd.read_csv(args.risk_path)
+        if args.risk_model == "AF":
+            df["risk_score"] = CHARGE_AF(risk_factors)
+            df = df.rename(columns={"y_pred": "model_score"})
+            df["y_pred"] = CARDIACFM_ECG_Risk_AF(df, args.seed)
+        else:
+            risk_factors = pd.read_csv(args.risk_path)
+            df["risk_score"] = PREVENT_HF(risk_factors)
+            df = df.rename(columns={"y_pred": "model_score"})
+            df["y_pred"] = CARDIACFM_ECG_Risk_HF(df, args.seed)
+
+    epoch_auc = roc_auc_score(
+    df.loc[df["y_true"].notna() & df["y_pred"].notna(), "y_true"],
+    df.loc[df["y_true"].notna() & df["y_pred"].notna(), "y_pred"]
+)
+
+    df[["id", "y_true", "y_pred"]].to_csv(save_path, index=False)
+
+    return epoch_auc
 
 def cleanup():
     if torch.distributed.is_initialized():
@@ -102,8 +153,7 @@ def test(batch_size, args):
     loss_fn = nn.BCELoss()
     
     print("\n\t Started Evaluation on Test Set\n")
-    val_loss, val_auc = val_one_epoch(testloader, model, loss_fn, device)
-    print("\t Test loss ......", round(val_loss,4))
+    val_auc = val_one_epoch(testloader, model, loss_fn, device)
     print("\t Test auc ......", round(val_auc,4))
     #wandb.log({"val_loss": val_loss, "val_auc":val_auc})
     
@@ -115,7 +165,9 @@ if __name__=="__main__":
     parser.add_argument('--label_dir', type=str, help='Path to downstream task label')
     parser.add_argument('--ecgfm_ckpt', type=str, default='', help='Path to ecgfm model')
     parser.add_argument('--finetuned_ckpt', type=str, default='', help='Path to cardiacfm model, use this when you want ot finetune based on the model already finetuned on UKB')
-    
+    parser.add_argument('--risk_path', type=str, default='', help='Path to risk factor')
+    parser.add_argument('--risk_model', type=str, default='', help='Choose the risk model to use, AF or HF')
+    parser.add_argument('--seed', default=1, type=int, help='Seed')
     args = parser.parse_args()
     #wandb.init(
         #project="ecg_downstream",

@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-import wandb
+#import wandb
 import time
 import numpy as np
 from model import ECGFM, CARDIACFM_ECG
@@ -16,6 +16,7 @@ import pandas as pd
 from glob import glob
 import math
 from scipy.stats import pearsonr
+import torch.multiprocessing as mp
 mp.set_sharing_strategy("file_system")
 
 def val_one_epoch(val_data_loader, model, loss_fn, device):
@@ -74,7 +75,7 @@ def test(batch_size, args):
     """
     DataLoader
     """
-    ecgs_dir = args.ecg_tsv_path
+    ecgs_dir = args.ecg_tsv_dir
     labels_dir = f"{args.label_dir}/y.npy"
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -86,10 +87,10 @@ def test(batch_size, args):
     Model and Loss
     """
     if "ECGFM" in args.model_name:
-        print("\nLoading ECGFM_default model with checkpoint:", args.model_name)
+        print("\nLoading ECGFM model.....")
         model = ECGFM(ecgfm_ckpt = args.ecgfm_ckpt)
     elif "CARDIACFM" in args.model_name:
-        print("\nLoading ECG_NC model with checkpoint:", args.model_name)
+        print("\nLoading CARDIACFM model.....")
         model = CARDIACFM_ECG(ecgfm_ckpt = args.ecgfm_ckpt)
     
     ckpt_path = args.finetuned_ckpt
@@ -116,7 +117,7 @@ if __name__=="__main__":
     parser.add_argument('--ecg_tsv_dir', type=str, default='', help='Path to ECG TSV file')
     parser.add_argument('--label_dir', type=str, help='Path to downstream task label')
     parser.add_argument('--ecgfm_ckpt', type=str, default='', help='Path to ecgfm model')
-    parser.add_argument('--finetuned_ckpt', type=str, default='', help='Path to cardiacfm model, use this when you want ot finetune based on the model already finetuned on UKB')
+    parser.add_argument('--finetuned_ckpt', type=str, default='', help='Path to cardiacfm model, use this when you want to finetune based on the model already finetuned on UKB(Or you want to start from a specific model weight')
     args = parser.parse_args()
 
     #wandb.init(

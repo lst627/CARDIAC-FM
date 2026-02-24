@@ -98,7 +98,7 @@ def train_clip(args):
     """
     Model and Loss
     """
-    model = MMCL(mri_ckpt=args.pt_mri_path, ecg_ckpt=args.pt_ecg_path)
+    model = MMCL(densenet_ckpt = args.densenet_ckpt, mri_ckpt=args.pt_mri_path, ecg_ckpt=args.pt_ecg_path)
     model = nn.DataParallel(model,device_ids=range(torch.cuda.device_count()))
     model.to(device)
     print("\n\n\n\n\t Model Loaded")
@@ -159,6 +159,7 @@ if __name__=="__main__":
     parser.add_argument('--cropped_mri_path', type=str, default='', help='Path to cropped MRI file')
     parser.add_argument('--ecg_tsv_path', type=str, default='', help='Path to ECG TSV file')
     parser.add_argument('--save_path', type=str, default='', help='Path to save models')
+    parser.add_argument('--densenet_ckpt', type=str, default='', help='Path to cnnlstm model')
     parser.add_argument('--pt_mri_path', type=str, default='', help='Path to pretrained MRI model')
     parser.add_argument('--pt_ecg_path', type=str, default='', help='Path to pretrained ECG model')
     parser.add_argument('--wandb', action='store_true', help='Use wandb for logging')

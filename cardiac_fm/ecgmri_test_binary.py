@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-import wandb
+#import wandb
 import time
 import numpy as np
 from model import CARDIACFM_ECGMRI
@@ -14,6 +14,7 @@ from sklearn.metrics import roc_auc_score
 import argparse
 import pandas as pd
 from glob import glob
+import torch.multiprocessing as mp
 mp.set_sharing_strategy("file_system")
 
 def val_one_epoch(val_data_loader, model, loss_fn, device):
@@ -93,7 +94,7 @@ def test(batch_size, args):
     Model and Loss
     """
 
-    model = CARDIACFM_ECGMRI(ecgfm_ckpt=args.ecgfm_ckpt, device=device)
+    model = CARDIACFM_ECGMRI(ecgfm_ckpt=args.ecgfm_ckpt, cnnlstm_ckpt=args.densenet_ckpt, device=device)
     ckpt_path = args.finetuned_ckpt
     checkpoint = torch.load(ckpt_path)
     model.load_state_dict(checkpoint)
@@ -121,8 +122,12 @@ if __name__=="__main__":
     parser.add_argument('--mris_csv_dir', type=str, default='', help='Path to mris csv dir')
     parser.add_argument('--ecg_tsv_dir', type=str, default='', help='Path to ecgs tsv dir')
     parser.add_argument('--ecgfm_ckpt', type=str, default='', help='Path to ecgfm model')
+    parser.add_argument('--densenet_ckpt', type=str, default='', help='Path to cnnlstm model')
     parser.add_argument('--save_dir', type=str, help='Path to dir used to save results')
     parser.add_argument('--finetuned_ckpt', type=str, default='', help='Path to cardiacfm model, use this when you want ot finetune based on the model already finetuned on UKB')
+    parser.add_argument('--risk_path', type=str, default='', help='Path to risk factor')
+    parser.add_argument('--risk_model', type=str, default='', help='Choose the risk model to use, AF or HF')
+    parser.add_argument('--seed', default=1, type=int, help='Seed')
     args = parser.parse_args()
 
     #wandb.init(
@@ -132,7 +137,6 @@ if __name__=="__main__":
     #)
     
     test(batch_size=4, args=args)
-
 
 
 
