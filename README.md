@@ -133,6 +133,61 @@ python ecgmri_finetune_binary.py \
 
 ## Inference
 
+### ECG-based Inference
+```
+CUDA_VISIBLE_DEVICES=0 python ecg_inference_binary.py \
+  --save_dir your_save_dir \
+  --model_name CARDIACFM \
+  --ecg_tsv_dir your_ecg_tsv_dir \
+  --label_dir your_label_dir \
+  --ecgfm_ckpt your_ecgfm_pretrained_path \
+  --finetuned_ckpt your_finetuned_ckpt_path \
+  --risk_path your_risk_path \
+  --risk_model your_risk_model \
+  --seed 1
+
+# ===== Required arguments =====
+# --save_dir: directory to save inference results
+# --model_name: model to use (ECGFM or CARDIACFM)
+# --ecg_tsv_dir: ECG manifest directory (test data)
+# --label_dir: directory containing labels for evaluation
+# --finetuned_ckpt: fine-tuned model checkpoint for inference
+
+# ===== Optional arguments =====
+# --ecgfm_ckpt: pretrained ECG-FM checkpoint (needed for model initialization)
+# --risk_path: path to risk factor file (optional, only if using risk score)
+# --risk_model: risk model name (e.g., AF or HF), must match risk_path
+```
+### ECG+MRI-based Inference
+
+```
+CUDA_VISIBLE_DEVICES=0 python ecgmri_test_binary.py \
+  --label_dir your_label_dir \
+  --mris_dir your_mris_dir \
+  --mris_csv_dir your_mris_csv_dir \
+  --ecg_tsv_dir your_ecg_tsv_dir \
+  --ecgfm_ckpt your_ecgfm_pretrained_path \
+  --save_dir your_save_dir \
+  --finetuned_ckpt your_finetuned_ckpt_path \
+  --risk_path your_risk_path \
+  --risk_model your_risk_model \
+  --seed 1
+
+# ===== Required arguments =====
+# --label_dir: directory containing downstream task labels
+# --mris_dir: directory containing MRI data
+# --mris_csv_dir: directory containing MRI csv/metadata files
+# --ecg_tsv_dir: directory containing ECG manifest files
+# --save_dir: directory used to save inference results
+# --finetuned_ckpt: fine-tuned multimodal model checkpoint for inference
+
+# ===== Optional arguments =====
+# --ecgfm_ckpt: pretrained ECG-FM checkpoint used for ECG encoder initialization
+# --risk_path: path to risk factor file (optional, only if using risk score)
+# --risk_model: risk model to use (e.g., AF or HF), must match risk_path
+# --seed: random seed
+```
+
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
