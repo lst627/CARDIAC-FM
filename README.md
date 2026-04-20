@@ -128,10 +128,7 @@ python ecgmri_finetune_binary.py \
 # --cardiacfm_pretrained_ckpt: Stage 1 contrastive pretrained CARDIAC-FM checkpoint
 # --finetuned_ckpt: already fine-tuned CARDIAC-FM checkpoint
 
-# Note:
-# (1) This stage performs supervised fine-tuning for downstream binary classification using ECG and MRI.
-# (2) Provide either --cardiacfm_pretrained_ckpt or --finetuned_ckpt depending on how you want to initialize the model.
-# (3) Make sure all paths are correctly set before running.
+# Note:Provide either --cardiacfm_pretrained_ckpt or --finetuned_ckpt depending on how you want to initialize the model.
 ```
 
 ## Inference
