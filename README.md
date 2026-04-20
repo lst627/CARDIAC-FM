@@ -158,7 +158,7 @@ python ecg_inference_binary.py \
 # --risk_path: path to risk factor file (optional, only if using risk score)
 # --risk_model: risk model name (e.g., AF or HF), must match risk_path
 ```
-Command for ECG-based Inference.An input entry point for Risk Score has been provided; currently, it is available only for Inference tasks with the labels Atrial fibrillation and Heart failure.
+Command for ECG-based Inference. An input entry point for Risk Score has been provided; currently, it is available only for Inference tasks with the labels Atrial fibrillation and Heart failure.
 
 ### ECG+MRI-based Inference
 
@@ -189,7 +189,7 @@ python ecgmri_test_binary.py \
 # --risk_model: risk model to use (e.g., AF or HF), must match risk_path
 # --seed: random seed
 ```
-Command for ECG+MRI-based Inference.An input entry point for Risk Score has been provided; currently, it is available only for Inference tasks with the labels Atrial fibrillation and Heart failure.
+Command for ECG+MRI-based Inference. An input entry point for Risk Score has been provided; currently, it is available only for Inference tasks with the labels Atrial fibrillation and Heart failure.
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
