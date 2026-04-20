@@ -47,7 +47,7 @@ python -c "import numpy, pandas, nibabel, wfdb, torch, torchvision, fairseq_sign
 
 ## Training
 
-### Stage 1: Multi-modal Contrastive Pretraining
+### Multi-modal Contrastive Pretraining
 
 After filling in the paths for data and model weights, you can use 
 
@@ -71,9 +71,9 @@ python stage1_CL.py \
 # --wandb: optional logging with Weights & Biases
 ```
 
-for Stage 1 training. Note that (1) `--dry_run` is for testing the pipeline and will only use 100 samples for training, and (2) `--wandb` is for tracking the loss curves on wandb, which is not required in your training. Please remove `--dry_run` in actual training.
+for pre-training. Note that (1) `--dry_run` is for testing the pipeline and will only use 100 samples for training, and (2) `--wandb` is for tracking the loss curves on wandb, which is not required in your training. Please remove `--dry_run` in actual training.
 
-### Stage 2: Downstream Label Prediction Fine-tuning
+### Downstream Label Prediction Fine-tuning
 
 #### ECG Fine-tuning for Binary Classification
 ```
