@@ -107,7 +107,6 @@ CUDA_VISIBLE_DEVICES=0 python multimodal_finetune_binary.py \
 
 # or initialize from an already fine-tuned checkpoint
 
-```
 CUDA_VISIBLE_DEVICES=0 python multimodal_finetune_binary.py \
   --seed 1 \
   --epochs 20 \
