@@ -68,6 +68,7 @@ python stage1_CL.py \
   --pt_ecg_path your_ecg_pretrained_path \
   --wandb \
   --dry_run
+```
 
 # --dry_run: runs a quick test using a small subset of data (remove for full training)
 # --wandb: optional logging with Weights & Biases
