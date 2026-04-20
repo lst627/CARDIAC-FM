@@ -71,8 +71,9 @@ python stage1_CL.py \
 
 # --dry_run: runs a quick test using a small subset of data (remove for full training)
 # --wandb: optional logging with Weights & Biases
-for Stage 1 training. Note that (1) `--dry_run` is for testing the pipeline and will only use 100 samples for training, and (2) `--wandb` is for tracking the loss curves on wandb, which is not required in your training. Please remove `--dry_run` in actual training.
 ```
+
+for Stage 1 training. Note that (1) `--dry_run` is for testing the pipeline and will only use 100 samples for training, and (2) `--wandb` is for tracking the loss curves on wandb, which is not required in your training. Please remove `--dry_run` in actual training.
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
