@@ -85,7 +85,8 @@ python ecg_finetune_binary.py \
   --ecg_tsv_dir your_ecg_tsv_dir \
   --ecgfm_ckpt your_ecgfm_pretrained_path \
   --save_dir your_save_dir \
-  --cardiacfm_pretrained_ckpt your_cardiacfm_stage1_ckpt
+  --cardiacfm_pretrained_ckpt your_cardiacfm_stage1_ckpt \
+  --finetuned_ckpt your_finetuned_ckpt_path
 
 # --label_dir: directory containing binary labels
 # --ecg_tsv_dir: ECG manifest (train/valid split)
