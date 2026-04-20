@@ -48,11 +48,31 @@ python -c "import numpy, pandas, nibabel, wfdb, torch, torchvision, fairseq_sign
 ## Finetuning
 
 ## Training
+
+### Stage 1: Multi-modal Contrastive Pretraining
+
 After filling in the paths for data and model weights in scripts/stage1.sh, you can use 
+
 ```bash
-bash scripts/stage1.sh
-```
+export WEIGHTS_PATH=your_model_weights_path
+
+python stage1_CL.py \
+  --lr 1e-4 \
+  --epochs 20 \
+  --batch_size 32 \
+  --mri_csv_path your_mri_csv_path \
+  --cropped_mri_path your_cropped_mri_path \
+  --ecg_tsv_path your_ecg_tsv_path \
+  --save_path your_save_path \
+  --pt_mri_path your_mri_pretrained_path \
+  --pt_ecg_path your_ecg_pretrained_path \
+  --wandb \
+  --dry_run
+
+# --dry_run: runs a quick test using a small subset of data (remove for full training)
+# --wandb: optional logging with Weights & Biases
 for Stage 1 training. Note that (1) `--dry_run` is for testing the pipeline and will only use 100 samples for training, and (2) `--wandb` is for tracking the loss curves on wandb, which is not required in your training. Please remove `--dry_run` in actual training.
+
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
