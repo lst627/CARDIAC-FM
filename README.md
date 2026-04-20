@@ -73,8 +73,30 @@ python stage1_CL.py \
 # --wandb: optional logging with Weights & Biases
 ```
 
+### Stage 2: Downstream Label Prediction Fine-tuning
+```
 for Stage 1 training. Note that (1) `--dry_run` is for testing the pipeline and will only use 100 samples for training, and (2) `--wandb` is for tracking the loss curves on wandb, which is not required in your training. Please remove `--dry_run` in actual training.
 
+CUDA_VISIBLE_DEVICES=0 python ecg_finetune_binary.py \
+  --seed 1 \
+  --epochs 20 \
+  --model_name CARDIACFM \
+  --label_dir your_label_dir \
+  --ecg_tsv_dir your_ecg_tsv_dir \
+  --ecgfm_ckpt your_ecgfm_pretrained_path \
+  --save_dir your_save_dir \
+  --cardiacfm_pretrained_ckpt your_cardiacfm_stage1_ckpt
+
+# --label_dir: directory containing binary labels
+# --ecg_tsv_dir: ECG manifest (train/valid split)
+# --ecgfm_ckpt: pretrained ECG-FM checkpoint
+# --cardiacfm_pretrained_ckpt: pretrained CARDIAC-FM (Stage 1) checkpoint
+# --save_dir: directory to save fine-tuned models
+
+# Note:
+# (1) This stage performs supervised fine-tuning for downstream binary classification.
+# (2) Make sure all paths are correctly set before running.
+```
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
