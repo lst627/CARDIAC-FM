@@ -57,3 +57,14 @@ for Stage 1 training. Note that (1) `--dry_run` is for testing the pipeline and 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Citation
+
+If you find this work useful, please consider citing:
+
+```bibtex
+@article{li2026cardiacfm,
+  title={CARDIAC-FM: A Multimodal Foundation Model for Cardiovascular Risk Prediction Using ECG and Cardiac MRI},
+  author={Li, Fumin and Li, Siting and Qian, Yuhan and Chen, Bojun and Brody, Jennifer A and Yogeswaran, Vidhushei and Wiggins, Kerri L and Sitlani, Colleen M and Bis, Joshua C and Shojaie, Ali and others},
+  journal={medRxiv},
+  year={2026},
+  doi={10.64898/2026.03.16.26348526}
+}
