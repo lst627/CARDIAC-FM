@@ -10,7 +10,7 @@
 
 CARDIAC-FM is a multimodal foundation model for cardiovascular risk prediction using 12-lead electrocardiogram (ECG) and cardiac magnetic resonance imaging (MRI) data.
 
-Paper: *CARDIAC-FM: A Multimodal Foundation Model for Cardiovascular Risk Prediction Using ECG and Cardiac MRI*  
+Paper: **CARDIAC-FM: A Multimodal Foundation Model for Cardiovascular Risk Prediction Using ECG and Cardiac MRI**  
 https://www.medrxiv.org/content/10.64898/2026.03.16.26348526v1
 
 This repository provides code and pretrained models to:
@@ -25,7 +25,6 @@ The model supports multiple input configurations:
 - ECG + MRI  
 - ECG + clinical risk scores  
 - ECG + MRI + clinical risk scores
-  
 ## Environment
 Ensure that you have NVIDIA GPUs and NCCL before installation.
 ```bash
