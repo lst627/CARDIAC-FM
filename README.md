@@ -73,6 +73,8 @@ python stage1_CL.py \
 for Stage 1 training. Note that (1) `--dry_run` is for testing the pipeline and will only use 100 samples for training, and (2) `--wandb` is for tracking the loss curves on wandb, which is not required in your training. Please remove `--dry_run` in actual training.
 
 ### Stage 2: Downstream Label Prediction Fine-tuning
+
+#### ECG Fine-tuning for Binary Classification
 ```
 python ecg_finetune_binary.py \
   --seed 1 \
@@ -89,6 +91,47 @@ python ecg_finetune_binary.py \
 # --ecgfm_ckpt: pretrained ECG-FM checkpoint
 # --cardiacfm_pretrained_ckpt: pretrained CARDIAC-FM (Stage 1) checkpoint
 # --save_dir: directory to save fine-tuned models
+```
+#### ECG-MRI Fine-tuning for Binary Classification
+
+CUDA_VISIBLE_DEVICES=0 python multimodal_finetune_binary.py \
+  --seed 1 \
+  --epochs 20 \
+  --label_dir your_label_dir \
+  --mris_dir your_mris_dir \
+  --mris_csv_dir your_mris_csv_dir \
+  --ecg_tsv_dir your_ecg_tsv_dir \
+  --ecgfm_ckpt your_ecgfm_pretrained_path \
+  --save_dir your_save_dir \
+  --cardiacfm_pretrained_ckpt your_cardiacfm_stage1_ckpt
+
+# or initialize from an already fine-tuned checkpoint
+
+```
+CUDA_VISIBLE_DEVICES=0 python multimodal_finetune_binary.py \
+  --seed 1 \
+  --epochs 20 \
+  --label_dir your_label_dir \
+  --mris_dir your_mris_dir \
+  --mris_csv_dir your_mris_csv_dir \
+  --ecg_tsv_dir your_ecg_tsv_dir \
+  --ecgfm_ckpt your_ecgfm_pretrained_path \
+  --save_dir your_save_dir \
+  --finetuned_ckpt your_finetuned_ckpt_path
+
+# --label_dir: directory containing binary classification labels
+# --mris_dir: directory containing MRI data
+# --mris_csv_dir: directory containing MRI metadata csv files
+# --ecg_tsv_dir: directory containing ECG manifest files
+# --ecgfm_ckpt: pretrained ECG-FM checkpoint
+# --save_dir: directory to save fine-tuned models
+# --cardiacfm_pretrained_ckpt: Stage 1 contrastive pretrained CARDIAC-FM checkpoint
+# --finetuned_ckpt: already fine-tuned CARDIAC-FM checkpoint
+
+# Note:
+# (1) This stage performs supervised fine-tuning for downstream binary classification using ECG and MRI.
+# (2) Provide either --cardiacfm_pretrained_ckpt or --finetuned_ckpt depending on how you want to initialize the model.
+# (3) Make sure all paths are correctly set before running.
 ```
 
 ## Inference
