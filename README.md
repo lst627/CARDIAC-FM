@@ -43,9 +43,6 @@ To test if installation of some packages is successful:
 ```bash
 python -c "import numpy, pandas, nibabel, wfdb, torch, torchvision, fairseq_signals; print('ok')"
 ```
-## Inference
-
-## Finetuning
 
 ## Training
 
@@ -73,11 +70,11 @@ python stage1_CL.py \
 # --wandb: optional logging with Weights & Biases
 ```
 
-### Stage 2: Downstream Label Prediction Fine-tuning
-```
 for Stage 1 training. Note that (1) `--dry_run` is for testing the pipeline and will only use 100 samples for training, and (2) `--wandb` is for tracking the loss curves on wandb, which is not required in your training. Please remove `--dry_run` in actual training.
 
-CUDA_VISIBLE_DEVICES=0 python ecg_finetune_binary.py \
+### Stage 2: Downstream Label Prediction Fine-tuning
+```
+python ecg_finetune_binary.py \
   --seed 1 \
   --epochs 20 \
   --model_name CARDIACFM \
@@ -92,11 +89,10 @@ CUDA_VISIBLE_DEVICES=0 python ecg_finetune_binary.py \
 # --ecgfm_ckpt: pretrained ECG-FM checkpoint
 # --cardiacfm_pretrained_ckpt: pretrained CARDIAC-FM (Stage 1) checkpoint
 # --save_dir: directory to save fine-tuned models
-
-# Note:
-# (1) This stage performs supervised fine-tuning for downstream binary classification.
-# (2) Make sure all paths are correctly set before running.
 ```
+
+## Inference
+
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
