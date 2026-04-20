@@ -104,29 +104,22 @@ python ecgmri_finetune_binary.py \
   --ecg_tsv_dir your_ecg_tsv_dir \
   --ecgfm_ckpt your_ecgfm_pretrained_path \
   --save_dir your_save_dir \
-  --cardiacfm_pretrained_ckpt your_cardiacfm_stage1_ckpt
-
-# or initialize from an already fine-tuned checkpoint
-
-python ecgmri_finetune_binary.py \
-  --seed 1 \
-  --epochs 20 \
-  --label_dir your_label_dir \
-  --mris_dir your_mris_dir \
-  --mris_csv_dir your_mris_csv_dir \
-  --ecg_tsv_dir your_ecg_tsv_dir \
-  --ecgfm_ckpt your_ecgfm_pretrained_path \
-  --save_dir your_save_dir \
+  --cardiacfm_pretrained_ckpt your_cardiacfm_stage1_ckpt \
   --finetuned_ckpt your_finetuned_ckpt_path
 
-# --label_dir: directory containing binary classification labels
+# ===== Required=====
+# --seed: random seed
+# --epochs: number of training epochs
+# --label_dir: directory containing downstream task labels
 # --mris_dir: directory containing MRI data
 # --mris_csv_dir: directory containing MRI metadata csv files
 # --ecg_tsv_dir: directory containing ECG manifest files
-# --ecgfm_ckpt: pretrained ECG-FM checkpoint
 # --save_dir: directory to save fine-tuned models
+
+# ===== Optional=====
+# --ecgfm_ckpt: pretrained ECG-FM checkpoint (for ECG encoder)
 # --cardiacfm_pretrained_ckpt: Stage 1 contrastive pretrained CARDIAC-FM checkpoint
-# --finetuned_ckpt: already fine-tuned CARDIAC-FM checkpoint
+# --finetuned_ckpt: already fine-tuned checkpoint (e.g., trained on UKB)
 
 # Note:Provide either --cardiacfm_pretrained_ckpt or --finetuned_ckpt depending on how you want to initialize the model.
 ```
