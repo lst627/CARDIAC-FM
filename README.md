@@ -95,7 +95,7 @@ python ecg_finetune_binary.py \
 #### ECG-MRI Fine-tuning for Binary Classification
 
 ```
-CUDA_VISIBLE_DEVICES=0 python multimodal_finetune_binary.py \
+python ecgmri_finetune_binary.py \
   --seed 1 \
   --epochs 20 \
   --label_dir your_label_dir \
@@ -108,7 +108,7 @@ CUDA_VISIBLE_DEVICES=0 python multimodal_finetune_binary.py \
 
 # or initialize from an already fine-tuned checkpoint
 
-CUDA_VISIBLE_DEVICES=0 python multimodal_finetune_binary.py \
+python ecgmri_finetune_binary.py \
   --seed 1 \
   --epochs 20 \
   --label_dir your_label_dir \
