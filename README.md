@@ -49,7 +49,7 @@ python -c "import numpy, pandas, nibabel, wfdb, torch, torchvision, fairseq_sign
 
 ### Stage 1: Multi-modal Contrastive Pretraining
 
-After filling in the paths for data and model weights in scripts/stage1.sh, you can use 
+After filling in the paths for data and model weights, you can use 
 
 ```bash
 export WEIGHTS_PATH=your_model_weights_path
