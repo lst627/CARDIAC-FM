@@ -135,10 +135,12 @@ celerybeat.pid
 *.sage.py
 
 # Environments
+# NOTE: the stock Python template ignores `env/`, but this repository has a tracked
+# `env/` directory (SETUP.md, requirements-lock.txt, config.example.sh). Ignoring it
+# would silently drop those files, so that rule is deliberately omitted.
 .env
 .envrc
 .venv
-env/
 venv/
 ENV/
 env.bak/
@@ -208,3 +210,25 @@ __marimo__/
 
 
 wandb/
+# ---- CARDIAC-FM ----
+# Model checkpoints (obtain separately — see weights/README.md)
+weights/*.pt
+weights/*.pth
+*.ckpt
+
+# Local cluster config (copy from env/config.example.sh)
+env/config.sh
+
+# Data — never commit cohort data
+*.npy
+*.mat
+data_train_valid_test_individual*/
+
+# Run outputs
+logs/
+checkpoints/
+*.out
+*.err
+
+# macOS
+.DS_Store
