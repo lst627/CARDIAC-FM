@@ -1,0 +1,2243 @@
+{
+  "_meta": {
+    "B": 2000,
+    "seed": 42,
+    "our_seed": 3,
+    "ecgfm_seed": 1,
+    "note": "UKB +RS bars use the risk score; see ukb-risk-score-mapping-bug"
+  },
+  "UKB|af5": {
+    "n": 5147,
+    "pos": 261,
+    "neg": 4886,
+    "auroc": {
+      "bars": {
+        "Risk Score": {
+          "point": 0.7898240810008422,
+          "ci_lo": 0.7610261471120082,
+          "ci_hi": 0.8153198676961151,
+          "family": "Risk Score",
+          "is_rs": false
+        },
+        "ECG-FM": {
+          "point": 0.757303296775681,
+          "ci_lo": 0.7234009947884564,
+          "ci_hi": 0.7890583659936985,
+          "family": "ECG-FM",
+          "is_rs": false
+        },
+        "ECGFounder": {
+          "point": 0.7390166289484539,
+          "ci_lo": 0.7041490034079699,
+          "ci_hi": 0.7719919529251611,
+          "family": "ECGFounder",
+          "is_rs": false
+        },
+        "DeepECG-SSL": {
+          "point": 0.7336215914419649,
+          "ci_lo": 0.6964093888551699,
+          "ci_hi": 0.766879409933456,
+          "family": "DeepECG-SSL",
+          "is_rs": false
+        },
+        "DeepECG-SL": {
+          "point": 0.67085487819605,
+          "ci_lo": 0.6320615002909242,
+          "ci_hi": 0.7064570874952754,
+          "family": "DeepECG-SL",
+          "is_rs": false
+        },
+        "CARDIAC-FM (ECG)": {
+          "point": 0.7693045106591199,
+          "ci_lo": 0.7369332564069991,
+          "ci_hi": 0.8011103641963981,
+          "family": "CARDIAC-FM (ECG)",
+          "is_rs": false
+        },
+        "CARDIAC-FM (ECG+MRI)": {
+          "point": 0.8160139298613758,
+          "ci_lo": 0.7884031002645764,
+          "ci_hi": 0.8425219232210883,
+          "family": "CARDIAC-FM (ECG+MRI)",
+          "is_rs": false
+        },
+        "ECG-FM +RS": {
+          "point": 0.8187236031322584,
+          "ci_lo": 0.7914036389841645,
+          "ci_hi": 0.8436744557520667,
+          "family": "ECG-FM",
+          "is_rs": true
+        },
+        "ECGFounder +RS": {
+          "point": 0.8249576944369948,
+          "ci_lo": 0.7980570023352357,
+          "ci_hi": 0.8491069174104448,
+          "family": "ECGFounder",
+          "is_rs": true
+        },
+        "DeepECG-SSL +RS": {
+          "point": 0.8115265603656079,
+          "ci_lo": 0.781664067168217,
+          "ci_hi": 0.837249068022954,
+          "family": "DeepECG-SSL",
+          "is_rs": true
+        },
+        "DeepECG-SL +RS": {
+          "point": 0.8121374228972292,
+          "ci_lo": 0.7831189237213839,
+          "ci_hi": 0.8374059005086077,
+          "family": "DeepECG-SL",
+          "is_rs": true
+        },
+        "CARDIAC-FM (ECG) +RS": {
+          "point": 0.8212525269634251,
+          "ci_lo": 0.7940169779007346,
+          "ci_hi": 0.8466821695578735,
+          "family": "CARDIAC-FM (ECG)",
+          "is_rs": true
+        },
+        "CARDIAC-FM (ECG+MRI) +RS": {
+          "point": 0.8354537085393721,
+          "ci_lo": 0.809750314841215,
+          "ci_hi": 0.8598271235510638,
+          "family": "CARDIAC-FM (ECG+MRI)",
+          "is_rs": true
+        }
+      },
+      "pairs": [
+        {
+          "bar": "CARDIAC-FM (ECG)",
+          "vs": "ECG-FM",
+          "delta": 0.01184366290896031,
+          "ci_lo": -0.01310927460270411,
+          "ci_hi": 0.03623537144990065,
+          "p": 0.343,
+          "sig": false
+        },
+        {
+          "bar": "CARDIAC-FM (ECG)",
+          "vs": "ECGFounder",
+          "delta": 0.030460316480114425,
+          "ci_lo": -0.0018148263158638321,
+          "ci_hi": 0.06373868257575398,
+          "p": 0.065,
+          "sig": false
+        },
+        {
+          "bar": "CARDIAC-FM (ECG)",
+          "vs": "DeepECG-SSL",
+          "delta": 0.03633874228972292,
+          "ci_lo": 0.0064862387335463375,
+          "ci_hi": 0.06648274136911622,
+          "p": 0.013,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG)",
+          "vs": "DeepECG-SL",
+          "delta": 0.09873404209854414,
+          "ci_lo": 0.06268117092702107,
+          "ci_hi": 0.1343908743881572,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG+MRI)",
+          "vs": "ECG-FM",
+          "delta": 0.05829432654562336,
+          "ci_lo": 0.02800257754190171,
+          "ci_hi": 0.08900084767958497,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG+MRI)",
+          "vs": "ECGFounder",
+          "delta": 0.07691098011677747,
+          "ci_lo": 0.043794677654350606,
+          "ci_hi": 0.11064155464906376,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG+MRI)",
+          "vs": "DeepECG-SSL",
+          "delta": 0.08278940592638596,
+          "ci_lo": 0.04937269946347604,
+          "ci_hi": 0.11572523066137823,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG+MRI)",
+          "vs": "DeepECG-SL",
+          "delta": 0.1451847057352072,
+          "ci_lo": 0.1091635162941111,
+          "ci_hi": 0.18312863753346406,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG) +RS",
+          "vs": "ECG-FM +RS",
+          "delta": 0.0024813404629381313,
+          "ci_lo": -0.008433666916030313,
+          "ci_hi": 0.014924453791660658,
+          "p": 0.687,
+          "sig": false
+        },
+        {
+          "bar": "CARDIAC-FM (ECG) +RS",
+          "vs": "ECGFounder +RS",
+          "delta": -0.003852077952018669,
+          "ci_lo": -0.018366279917756995,
+          "ci_hi": 0.011289586479785046,
+          "p": 0.602,
+          "sig": false
+        },
+        {
+          "bar": "CARDIAC-FM (ECG) +RS",
+          "vs": "DeepECG-SSL +RS",
+          "delta": 0.010016222752316022,
+          "ci_lo": -0.004855827816750679,
+          "ci_hi": 0.02439111747851004,
+          "p": 0.177,
+          "sig": false
+        },
+        {
+          "bar": "CARDIAC-FM (ECG) +RS",
+          "vs": "DeepECG-SL +RS",
+          "delta": 0.009113593377277799,
+          "ci_lo": -0.005789510416029539,
+          "ci_hi": 0.024243557713570573,
+          "p": 0.223,
+          "sig": false
+        },
+        {
+          "bar": "CARDIAC-FM (ECG+MRI) +RS",
+          "vs": "ECG-FM +RS",
+          "delta": 0.016578081405470006,
+          "ci_lo": 0.004431811587725115,
+          "ci_hi": 0.029283448056296582,
+          "p": 0.005,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG+MRI) +RS",
+          "vs": "ECGFounder +RS",
+          "delta": 0.010244662990513203,
+          "ci_lo": -0.00534524319229393,
+          "ci_hi": 0.02699055711603871,
+          "p": 0.211,
+          "sig": false
+        },
+        {
+          "bar": "CARDIAC-FM (ECG+MRI) +RS",
+          "vs": "DeepECG-SSL +RS",
+          "delta": 0.024112963694847892,
+          "ci_lo": 0.006873007247229074,
+          "ci_hi": 0.04015017494663778,
+          "p": 0.005,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG+MRI) +RS",
+          "vs": "DeepECG-SL +RS",
+          "delta": 0.023210334319809667,
+          "ci_lo": 0.009350509627162152,
+          "ci_hi": 0.03763697357215781,
+          "p": 0.002,
+          "sig": true
+        }
+      ]
+    },
+    "auprc": {
+      "bars": {
+        "Risk Score": {
+          "point": 0.21186635716004268,
+          "ci_lo": 0.1731103237188032,
+          "ci_hi": 0.26130025044696464,
+          "family": "Risk Score",
+          "is_rs": false
+        },
+        "ECG-FM": {
+          "point": 0.2580502667170732,
+          "ci_lo": 0.21045161532865161,
+          "ci_hi": 0.31007584484751005,
+          "family": "ECG-FM",
+          "is_rs": false
+        },
+        "ECGFounder": {
+          "point": 0.22696448741134181,
+          "ci_lo": 0.1816060957595177,
+          "ci_hi": 0.28013357349317813,
+          "family": "ECGFounder",
+          "is_rs": false
+        },
+        "DeepECG-SSL": {
+          "point": 0.24297314329212638,
+          "ci_lo": 0.1912152164941471,
+          "ci_hi": 0.299563839117996,
+          "family": "DeepECG-SSL",
+          "is_rs": false
+        },
+        "DeepECG-SL": {
+          "point": 0.18785710567469954,
+          "ci_lo": 0.14588978209424425,
+          "ci_hi": 0.23691067446486283,
+          "family": "DeepECG-SL",
+          "is_rs": false
+        },
+        "CARDIAC-FM (ECG)": {
+          "point": 0.2906652880756393,
+          "ci_lo": 0.2374358757792342,
+          "ci_hi": 0.34816202681592445,
+          "family": "CARDIAC-FM (ECG)",
+          "is_rs": false
+        },
+        "CARDIAC-FM (ECG+MRI)": {
+          "point": 0.3368874889415123,
+          "ci_lo": 0.2823468641534466,
+          "ci_hi": 0.39520064110282915,
+          "family": "CARDIAC-FM (ECG+MRI)",
+          "is_rs": false
+        },
+        "ECG-FM +RS": {
+          "point": 0.3083434721368842,
+          "ci_lo": 0.2564835825173838,
+          "ci_hi": 0.36399001274321485,
+          "family": "ECG-FM",
+          "is_rs": true
+        },
+        "ECGFounder +RS": {
+          "point": 0.30388991657146264,
+          "ci_lo": 0.25291834322588846,
+          "ci_hi": 0.35877166752694606,
+          "family": "ECGFounder",
+          "is_rs": true
+        },
+        "DeepECG-SSL +RS": {
+          "point": 0.2682041919139814,
+          "ci_lo": 0.21762699554807535,
+          "ci_hi": 0.32653405107142547,
+          "family": "DeepECG-SSL",
+          "is_rs": true
+        },
+        "DeepECG-SL +RS": {
+          "point": 0.2818524217621244,
+          "ci_lo": 0.2314155337248164,
+          "ci_hi": 0.3409230994479655,
+          "family": "DeepECG-SL",
+          "is_rs": true
+        },
+        "CARDIAC-FM (ECG) +RS": {
+          "point": 0.319497095981748,
+          "ci_lo": 0.264126881185876,
+          "ci_hi": 0.3774276849075844,
+          "family": "CARDIAC-FM (ECG)",
+          "is_rs": true
+        },
+        "CARDIAC-FM (ECG+MRI) +RS": {
+          "point": 0.35181835281046725,
+          "ci_lo": 0.2951910306965189,
+          "ci_hi": 0.41143820021445554,
+          "family": "CARDIAC-FM (ECG+MRI)",
+          "is_rs": true
+        }
+      },
+      "pairs": [
+        {
+          "bar": "CARDIAC-FM (ECG)",
+          "vs": "ECG-FM",
+          "delta": 0.032472764231547754,
+          "ci_lo": 0.0003313955632887293,
+          "ci_hi": 0.06684178470215228,
+          "p": 0.046,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG)",
+          "vs": "ECGFounder",
+          "delta": 0.0623105610641027,
+          "ci_lo": 0.02231850109834289,
+          "ci_hi": 0.10472651745193123,
+          "p": 0.004,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG)",
+          "vs": "DeepECG-SSL",
+          "delta": 0.0462011727668834,
+          "ci_lo": 0.005148627477631326,
+          "ci_hi": 0.08503172030972304,
+          "p": 0.025,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG)",
+          "vs": "DeepECG-SL",
+          "delta": 0.10192994875139388,
+          "ci_lo": 0.06153028140008604,
+          "ci_hi": 0.1437574159398666,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG+MRI)",
+          "vs": "ECG-FM",
+          "delta": 0.0780380789300568,
+          "ci_lo": 0.03989707848313,
+          "ci_hi": 0.1168471937190715,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG+MRI)",
+          "vs": "ECGFounder",
+          "delta": 0.10787587576261176,
+          "ci_lo": 0.058922921323422195,
+          "ci_hi": 0.15576530249639503,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG+MRI)",
+          "vs": "DeepECG-SSL",
+          "delta": 0.09176648746539245,
+          "ci_lo": 0.043957328388943236,
+          "ci_hi": 0.13689302813691703,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG+MRI)",
+          "vs": "DeepECG-SL",
+          "delta": 0.14749526344990296,
+          "ci_lo": 0.10160336877566661,
+          "ci_hi": 0.19570805976229252,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG) +RS",
+          "vs": "ECG-FM +RS",
+          "delta": 0.011031185965739208,
+          "ci_lo": -0.02223809514024079,
+          "ci_hi": 0.0475014769812228,
+          "p": 0.522,
+          "sig": false
+        },
+        {
+          "bar": "CARDIAC-FM (ECG) +RS",
+          "vs": "ECGFounder +RS",
+          "delta": 0.015192352017272748,
+          "ci_lo": -0.024649613315193445,
+          "ci_hi": 0.055048108677674276,
+          "p": 0.463,
+          "sig": false
+        },
+        {
+          "bar": "CARDIAC-FM (ECG) +RS",
+          "vs": "DeepECG-SSL +RS",
+          "delta": 0.04876951499652955,
+          "ci_lo": 0.005873282925633322,
+          "ci_hi": 0.09028224157817125,
+          "p": 0.03,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG) +RS",
+          "vs": "DeepECG-SL +RS",
+          "delta": 0.035972914641688274,
+          "ci_lo": -0.008867039182278352,
+          "ci_hi": 0.07993733768174362,
+          "p": 0.115,
+          "sig": false
+        },
+        {
+          "bar": "CARDIAC-FM (ECG+MRI) +RS",
+          "vs": "ECG-FM +RS",
+          "delta": 0.04288885411774949,
+          "ci_lo": 0.006841207323294821,
+          "ci_hi": 0.08027758058852459,
+          "p": 0.027,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG+MRI) +RS",
+          "vs": "ECGFounder +RS",
+          "delta": 0.04705002016928303,
+          "ci_lo": 0.003692654437856863,
+          "ci_hi": 0.09167289253966537,
+          "p": 0.036,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG+MRI) +RS",
+          "vs": "DeepECG-SSL +RS",
+          "delta": 0.08062718314853984,
+          "ci_lo": 0.035663657590336566,
+          "ci_hi": 0.1212913021473842,
+          "p": 0.001,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG+MRI) +RS",
+          "vs": "DeepECG-SL +RS",
+          "delta": 0.06783058279369855,
+          "ci_lo": 0.023284948684740892,
+          "ci_hi": 0.11251550319047171,
+          "p": 0.001,
+          "sig": true
+        }
+      ]
+    }
+  },
+  "UKB|hf5": {
+    "n": 5153,
+    "pos": 127,
+    "neg": 5026,
+    "auroc": {
+      "bars": {
+        "Risk Score": {
+          "point": 0.7663864440343285,
+          "ci_lo": 0.7246177749717219,
+          "ci_hi": 0.8047548025856099,
+          "family": "Risk Score",
+          "is_rs": false
+        },
+        "ECG-FM": {
+          "point": 0.7968500803694802,
+          "ci_lo": 0.7512595135218125,
+          "ci_hi": 0.8390580399246752,
+          "family": "ECG-FM",
+          "is_rs": false
+        },
+        "ECGFounder": {
+          "point": 0.7015268634596163,
+          "ci_lo": 0.6481874567211132,
+          "ci_hi": 0.7524154318802072,
+          "family": "ECGFounder",
+          "is_rs": false
+        },
+        "DeepECG-SSL": {
+          "point": 0.7274957621940712,
+          "ci_lo": 0.67679652421581,
+          "ci_hi": 0.7773300882654292,
+          "family": "DeepECG-SSL",
+          "is_rs": false
+        },
+        "DeepECG-SL": {
+          "point": 0.7363959379729345,
+          "ci_lo": 0.6844944869356512,
+          "ci_hi": 0.783048071289139,
+          "family": "DeepECG-SL",
+          "is_rs": false
+        },
+        "CARDIAC-FM (ECG)": {
+          "point": 0.8169636003020514,
+          "ci_lo": 0.7718061160704494,
+          "ci_hi": 0.8575121768379231,
+          "family": "CARDIAC-FM (ECG)",
+          "is_rs": false
+        },
+        "CARDIAC-FM (ECG+MRI)": {
+          "point": 0.8295783187268723,
+          "ci_lo": 0.7877697782554339,
+          "ci_hi": 0.8724624276596344,
+          "family": "CARDIAC-FM (ECG+MRI)",
+          "is_rs": false
+        },
+        "ECG-FM +RS": {
+          "point": 0.824919865518203,
+          "ci_lo": 0.7854942488038578,
+          "ci_hi": 0.860065337410818,
+          "family": "ECG-FM",
+          "is_rs": true
+        },
+        "ECGFounder +RS": {
+          "point": 0.7939298325870826,
+          "ci_lo": 0.7515563557688993,
+          "ci_hi": 0.8329380136675116,
+          "family": "ECGFounder",
+          "is_rs": true
+        },
+        "DeepECG-SSL +RS": {
+          "point": 0.7862939486324655,
+          "ci_lo": 0.7430590065517576,
+          "ci_hi": 0.8268893094491322,
+          "family": "DeepECG-SSL",
+          "is_rs": true
+        },
+        "DeepECG-SL +RS": {
+          "point": 0.801738048760618,
+          "ci_lo": 0.7601399102619136,
+          "ci_hi": 0.8389191166563789,
+          "family": "DeepECG-SL",
+          "is_rs": true
+        },
+        "CARDIAC-FM (ECG) +RS": {
+          "point": 0.8241992035118173,
+          "ci_lo": 0.7829227779327027,
+          "ci_hi": 0.8610856224796413,
+          "family": "CARDIAC-FM (ECG)",
+          "is_rs": true
+        },
+        "CARDIAC-FM (ECG+MRI) +RS": {
+          "point": 0.8353631979846531,
+          "ci_lo": 0.7979203417817898,
+          "ci_hi": 0.8713391936732142,
+          "family": "CARDIAC-FM (ECG+MRI)",
+          "is_rs": true
+        }
+      },
+      "pairs": [
+        {
+          "bar": "CARDIAC-FM (ECG)",
+          "vs": "ECG-FM",
+          "delta": 0.019954886558400255,
+          "ci_lo": -0.008080598995459857,
+          "ci_hi": 0.04917625199357045,
+          "p": 0.168,
+          "sig": false
+        },
+        {
+          "bar": "CARDIAC-FM (ECG)",
+          "vs": "ECGFounder",
+          "delta": 0.1151911242640631,
+          "ci_lo": 0.07320075371845927,
+          "ci_hi": 0.15760709664077505,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG)",
+          "vs": "DeepECG-SSL",
+          "delta": 0.08912210364372976,
+          "ci_lo": 0.047764146125188436,
+          "ci_hi": 0.13466676040494938,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG)",
+          "vs": "DeepECG-SL",
+          "delta": 0.08060690472534944,
+          "ci_lo": 0.03976471952148042,
+          "ci_hi": 0.12201900511043356,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG+MRI)",
+          "vs": "ECG-FM",
+          "delta": 0.03325952644672897,
+          "ci_lo": -0.006763099598622577,
+          "ci_hi": 0.07123393393722718,
+          "p": 0.107,
+          "sig": false
+        },
+        {
+          "bar": "CARDIAC-FM (ECG+MRI)",
+          "vs": "ECGFounder",
+          "delta": 0.1284957641523918,
+          "ci_lo": 0.08046990296129418,
+          "ci_hi": 0.17426702015660303,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG+MRI)",
+          "vs": "DeepECG-SSL",
+          "delta": 0.10242674353205848,
+          "ci_lo": 0.06105054895645011,
+          "ci_hi": 0.14885064201584827,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG+MRI)",
+          "vs": "DeepECG-SL",
+          "delta": 0.09391154461367816,
+          "ci_lo": 0.04814601865574596,
+          "ci_hi": 0.14188268249198654,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG) +RS",
+          "vs": "ECG-FM +RS",
+          "delta": -0.0007260708880749251,
+          "ci_lo": -0.014921463507869409,
+          "ci_hi": 0.013384612612838465,
+          "p": 0.914,
+          "sig": false
+        },
+        {
+          "bar": "CARDIAC-FM (ECG) +RS",
+          "vs": "ECGFounder +RS",
+          "delta": 0.03029249634185699,
+          "ci_lo": 0.016045970402724645,
+          "ci_hi": 0.04464501129559362,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG) +RS",
+          "vs": "DeepECG-SSL +RS",
+          "delta": 0.03742618227735461,
+          "ci_lo": 0.011443838496511035,
+          "ci_hi": 0.06436036546963664,
+          "p": 0.002,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG) +RS",
+          "vs": "DeepECG-SL +RS",
+          "delta": 0.022420300265391616,
+          "ci_lo": 0.0074602225905604815,
+          "ci_hi": 0.03846126128384375,
+          "p": 0.003,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG+MRI) +RS",
+          "vs": "ECG-FM +RS",
+          "delta": 0.010763336947087742,
+          "ci_lo": -0.007939384491980344,
+          "ci_hi": 0.02939881905430347,
+          "p": 0.256,
+          "sig": false
+        },
+        {
+          "bar": "CARDIAC-FM (ECG+MRI) +RS",
+          "vs": "ECGFounder +RS",
+          "delta": 0.04178190417701966,
+          "ci_lo": 0.025113974262966448,
+          "ci_hi": 0.06027503438811094,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG+MRI) +RS",
+          "vs": "DeepECG-SSL +RS",
+          "delta": 0.048915590112517275,
+          "ci_lo": 0.023957938405331662,
+          "ci_hi": 0.07557441461878533,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG+MRI) +RS",
+          "vs": "DeepECG-SL +RS",
+          "delta": 0.033909708100554284,
+          "ci_lo": 0.01670882278294599,
+          "ci_hi": 0.05228453772665603,
+          "p": 0.0,
+          "sig": true
+        }
+      ]
+    },
+    "auprc": {
+      "bars": {
+        "Risk Score": {
+          "point": 0.1055791966178283,
+          "ci_lo": 0.07511242730227861,
+          "ci_hi": 0.15830767084660133,
+          "family": "Risk Score",
+          "is_rs": false
+        },
+        "ECG-FM": {
+          "point": 0.1748114392561833,
+          "ci_lo": 0.12397990977739215,
+          "ci_hi": 0.25290628482705363,
+          "family": "ECG-FM",
+          "is_rs": false
+        },
+        "ECGFounder": {
+          "point": 0.08364815667711425,
+          "ci_lo": 0.059832409555356056,
+          "ci_hi": 0.12748058491896408,
+          "family": "ECGFounder",
+          "is_rs": false
+        },
+        "DeepECG-SSL": {
+          "point": 0.14930493498424302,
+          "ci_lo": 0.1020374616675701,
+          "ci_hi": 0.2231872899174612,
+          "family": "DeepECG-SSL",
+          "is_rs": false
+        },
+        "DeepECG-SL": {
+          "point": 0.12799012965216142,
+          "ci_lo": 0.08749912365833877,
+          "ci_hi": 0.18953663775624113,
+          "family": "DeepECG-SL",
+          "is_rs": false
+        },
+        "CARDIAC-FM (ECG)": {
+          "point": 0.2261314931484883,
+          "ci_lo": 0.16361153755114918,
+          "ci_hi": 0.30700517176115155,
+          "family": "CARDIAC-FM (ECG)",
+          "is_rs": false
+        },
+        "CARDIAC-FM (ECG+MRI)": {
+          "point": 0.26473854759074256,
+          "ci_lo": 0.19628311339038576,
+          "ci_hi": 0.3582627520439889,
+          "family": "CARDIAC-FM (ECG+MRI)",
+          "is_rs": false
+        },
+        "ECG-FM +RS": {
+          "point": 0.19873171514432206,
+          "ci_lo": 0.14249637498390255,
+          "ci_hi": 0.2810298552435324,
+          "family": "ECG-FM",
+          "is_rs": true
+        },
+        "ECGFounder +RS": {
+          "point": 0.15148968438872581,
+          "ci_lo": 0.10565661794786325,
+          "ci_hi": 0.21388879337172767,
+          "family": "ECGFounder",
+          "is_rs": true
+        },
+        "DeepECG-SSL +RS": {
+          "point": 0.16876212882651248,
+          "ci_lo": 0.11811649581103291,
+          "ci_hi": 0.2434454639889364,
+          "family": "DeepECG-SSL",
+          "is_rs": true
+        },
+        "DeepECG-SL +RS": {
+          "point": 0.16319465254742682,
+          "ci_lo": 0.11401036141296678,
+          "ci_hi": 0.22997408036670022,
+          "family": "DeepECG-SL",
+          "is_rs": true
+        },
+        "CARDIAC-FM (ECG) +RS": {
+          "point": 0.2359318928756798,
+          "ci_lo": 0.168105537711445,
+          "ci_hi": 0.31698080801534945,
+          "family": "CARDIAC-FM (ECG)",
+          "is_rs": true
+        },
+        "CARDIAC-FM (ECG+MRI) +RS": {
+          "point": 0.25473000890969777,
+          "ci_lo": 0.18658685245390066,
+          "ci_hi": 0.33638882481016896,
+          "family": "CARDIAC-FM (ECG+MRI)",
+          "is_rs": true
+        }
+      },
+      "pairs": [
+        {
+          "bar": "CARDIAC-FM (ECG)",
+          "vs": "ECG-FM",
+          "delta": 0.049111142010445565,
+          "ci_lo": 0.0057991701158756365,
+          "ci_hi": 0.09251153020928911,
+          "p": 0.019,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG)",
+          "vs": "ECGFounder",
+          "delta": 0.14172647142119188,
+          "ci_lo": 0.08899717322874733,
+          "ci_hi": 0.20408495532015822,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG)",
+          "vs": "DeepECG-SSL",
+          "delta": 0.07581491696365553,
+          "ci_lo": 0.030018997322031307,
+          "ci_hi": 0.12482508102836234,
+          "p": 0.001,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG)",
+          "vs": "DeepECG-SL",
+          "delta": 0.09776430694794391,
+          "ci_lo": 0.045972887369646075,
+          "ci_hi": 0.156622393041773,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG+MRI)",
+          "vs": "ECG-FM",
+          "delta": 0.09120301410424501,
+          "ci_lo": 0.02959350697533321,
+          "ci_hi": 0.15771909635813086,
+          "p": 0.005,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG+MRI)",
+          "vs": "ECGFounder",
+          "delta": 0.18381834351499135,
+          "ci_lo": 0.12041304606795901,
+          "ci_hi": 0.2548216795358909,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG+MRI)",
+          "vs": "DeepECG-SSL",
+          "delta": 0.11790678905745497,
+          "ci_lo": 0.05393259317726447,
+          "ci_hi": 0.18479396864590072,
+          "p": 0.001,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG+MRI)",
+          "vs": "DeepECG-SL",
+          "delta": 0.13985617904174336,
+          "ci_lo": 0.07233927781907734,
+          "ci_hi": 0.2112334344481016,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG) +RS",
+          "vs": "ECG-FM +RS",
+          "delta": 0.0340979510728746,
+          "ci_lo": -0.01087934203558403,
+          "ci_hi": 0.0791542636147942,
+          "p": 0.126,
+          "sig": false
+        },
+        {
+          "bar": "CARDIAC-FM (ECG) +RS",
+          "vs": "ECGFounder +RS",
+          "delta": 0.08319204515420281,
+          "ci_lo": 0.03463438923156289,
+          "ci_hi": 0.13569458633245518,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG) +RS",
+          "vs": "DeepECG-SSL +RS",
+          "delta": 0.06542494492530554,
+          "ci_lo": 0.017736026102875835,
+          "ci_hi": 0.11526175995499463,
+          "p": 0.006,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG) +RS",
+          "vs": "DeepECG-SL +RS",
+          "delta": 0.07182453058465633,
+          "ci_lo": 0.024798352942571218,
+          "ci_hi": 0.12540647617394096,
+          "p": 0.002,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG+MRI) +RS",
+          "vs": "ECG-FM +RS",
+          "delta": 0.052605981733218544,
+          "ci_lo": -0.007217967117614682,
+          "ci_hi": 0.11087259952536026,
+          "p": 0.086,
+          "sig": false
+        },
+        {
+          "bar": "CARDIAC-FM (ECG+MRI) +RS",
+          "vs": "ECGFounder +RS",
+          "delta": 0.10170007581454676,
+          "ci_lo": 0.05490158698918494,
+          "ci_hi": 0.15387642471696153,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG+MRI) +RS",
+          "vs": "DeepECG-SSL +RS",
+          "delta": 0.08393297558564947,
+          "ci_lo": 0.023966729286652767,
+          "ci_hi": 0.14701394172735116,
+          "p": 0.003,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG+MRI) +RS",
+          "vs": "DeepECG-SL +RS",
+          "delta": 0.09033256124500028,
+          "ci_lo": 0.03957486906912618,
+          "ci_hi": 0.14726521703504566,
+          "p": 0.002,
+          "sig": true
+        }
+      ]
+    }
+  },
+  "CHS|af5": {
+    "n": 6605,
+    "pos": 944,
+    "neg": 5661,
+    "auroc": {
+      "bars": {
+        "Risk Score": {
+          "point": 0.6992639760897488,
+          "ci_lo": 0.6814713400152396,
+          "ci_hi": 0.7166507141488447,
+          "family": "Risk Score",
+          "is_rs": false
+        },
+        "ECG-FM": {
+          "point": 0.6766695035015075,
+          "ci_lo": 0.6580851570663385,
+          "ci_hi": 0.6955260672561894,
+          "family": "ECG-FM",
+          "is_rs": false
+        },
+        "ECGFounder": {
+          "point": 0.5959044787559244,
+          "ci_lo": 0.5743305462740906,
+          "ci_hi": 0.6161578421641981,
+          "family": "ECGFounder",
+          "is_rs": false
+        },
+        "DeepECG-SSL": {
+          "point": 0.5699716728193797,
+          "ci_lo": 0.5491655874156809,
+          "ci_hi": 0.5902040710638355,
+          "family": "DeepECG-SSL",
+          "is_rs": false
+        },
+        "DeepECG-SL": {
+          "point": 0.6122237641430064,
+          "ci_lo": 0.5924607628877632,
+          "ci_hi": 0.6317425421745274,
+          "family": "DeepECG-SL",
+          "is_rs": false
+        },
+        "CARDIAC-FM (ECG)": {
+          "point": 0.6793553274111599,
+          "ci_lo": 0.6606826246111516,
+          "ci_hi": 0.6974392840622277,
+          "family": "CARDIAC-FM (ECG)",
+          "is_rs": false
+        },
+        "ECG-FM +RS": {
+          "point": 0.7252016473103213,
+          "ci_lo": 0.7076225808310803,
+          "ci_hi": 0.7421359794490403,
+          "family": "ECG-FM",
+          "is_rs": true
+        },
+        "ECGFounder +RS": {
+          "point": 0.6943808214994656,
+          "ci_lo": 0.6759872784050251,
+          "ci_hi": 0.7117713020847368,
+          "family": "ECGFounder",
+          "is_rs": true
+        },
+        "DeepECG-SSL +RS": {
+          "point": 0.6296794676031964,
+          "ci_lo": 0.6108002147835772,
+          "ci_hi": 0.6483492278419994,
+          "family": "DeepECG-SSL",
+          "is_rs": true
+        },
+        "DeepECG-SL +RS": {
+          "point": 0.7048037568974758,
+          "ci_lo": 0.6872011171814886,
+          "ci_hi": 0.7219883938649516,
+          "family": "DeepECG-SL",
+          "is_rs": true
+        },
+        "CARDIAC-FM (ECG) +RS": {
+          "point": 0.717878272090635,
+          "ci_lo": 0.7011902870592427,
+          "ci_hi": 0.7349087403704802,
+          "family": "CARDIAC-FM (ECG)",
+          "is_rs": true
+        }
+      },
+      "pairs": [
+        {
+          "bar": "CARDIAC-FM (ECG)",
+          "vs": "ECG-FM",
+          "delta": 0.0026501334023455157,
+          "ci_lo": -0.01460402014676689,
+          "ci_hi": 0.019268934001299323,
+          "p": 0.742,
+          "sig": false
+        },
+        {
+          "bar": "CARDIAC-FM (ECG)",
+          "vs": "ECGFounder",
+          "delta": 0.08371753676657716,
+          "ci_lo": 0.06183712844200123,
+          "ci_hi": 0.10577021750065119,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG)",
+          "vs": "DeepECG-SSL",
+          "delta": 0.10941599871930754,
+          "ci_lo": 0.08745006534450704,
+          "ci_hi": 0.13283377158314838,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG)",
+          "vs": "DeepECG-SL",
+          "delta": 0.06723428508580864,
+          "ci_lo": 0.04472633619412036,
+          "ci_hi": 0.08904110912382968,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG) +RS",
+          "vs": "ECG-FM +RS",
+          "delta": -0.007300746315857232,
+          "ci_lo": -0.02032129493651177,
+          "ci_hi": 0.005662867815472422,
+          "p": 0.266,
+          "sig": false
+        },
+        {
+          "bar": "CARDIAC-FM (ECG) +RS",
+          "vs": "ECGFounder +RS",
+          "delta": 0.023709832027940202,
+          "ci_lo": 0.009646459457962364,
+          "ci_hi": 0.03852750588325121,
+          "p": 0.002,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG) +RS",
+          "vs": "DeepECG-SSL +RS",
+          "delta": 0.08825497905682353,
+          "ci_lo": 0.06995824182856836,
+          "ci_hi": 0.10710729579280182,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG) +RS",
+          "vs": "DeepECG-SL +RS",
+          "delta": 0.013217352540726172,
+          "ci_lo": -0.0013652501579345638,
+          "ci_hi": 0.02840959104667983,
+          "p": 0.08,
+          "sig": false
+        }
+      ]
+    },
+    "auprc": {
+      "bars": {
+        "Risk Score": {
+          "point": 0.2880035789719606,
+          "ci_lo": 0.26633697732020317,
+          "ci_hi": 0.3128897437215156,
+          "family": "Risk Score",
+          "is_rs": false
+        },
+        "ECG-FM": {
+          "point": 0.2790765563045786,
+          "ci_lo": 0.25617903650781926,
+          "ci_hi": 0.30435785020357725,
+          "family": "ECG-FM",
+          "is_rs": false
+        },
+        "ECGFounder": {
+          "point": 0.23702232268637938,
+          "ci_lo": 0.2168072065427538,
+          "ci_hi": 0.2608354268853929,
+          "family": "ECGFounder",
+          "is_rs": false
+        },
+        "DeepECG-SSL": {
+          "point": 0.1987490812731099,
+          "ci_lo": 0.18342140327860676,
+          "ci_hi": 0.2165336487193102,
+          "family": "DeepECG-SSL",
+          "is_rs": false
+        },
+        "DeepECG-SL": {
+          "point": 0.2117931883938713,
+          "ci_lo": 0.19613288676372842,
+          "ci_hi": 0.23241009598347634,
+          "family": "DeepECG-SL",
+          "is_rs": false
+        },
+        "CARDIAC-FM (ECG)": {
+          "point": 0.2876531031312178,
+          "ci_lo": 0.2648214001950992,
+          "ci_hi": 0.3144275381241826,
+          "family": "CARDIAC-FM (ECG)",
+          "is_rs": false
+        },
+        "ECG-FM +RS": {
+          "point": 0.3223836713983783,
+          "ci_lo": 0.29734766497776255,
+          "ci_hi": 0.349721239451563,
+          "family": "ECG-FM",
+          "is_rs": true
+        },
+        "ECGFounder +RS": {
+          "point": 0.30836344882203853,
+          "ci_lo": 0.2831987758957998,
+          "ci_hi": 0.3357152777195658,
+          "family": "ECGFounder",
+          "is_rs": true
+        },
+        "DeepECG-SSL +RS": {
+          "point": 0.25326283162833396,
+          "ci_lo": 0.23207151964766876,
+          "ci_hi": 0.2766804846843758,
+          "family": "DeepECG-SSL",
+          "is_rs": true
+        },
+        "DeepECG-SL +RS": {
+          "point": 0.2838778758265195,
+          "ci_lo": 0.26363819538686145,
+          "ci_hi": 0.30836812031879146,
+          "family": "DeepECG-SL",
+          "is_rs": true
+        },
+        "CARDIAC-FM (ECG) +RS": {
+          "point": 0.31468979556508664,
+          "ci_lo": 0.2905521293916886,
+          "ci_hi": 0.3419418625128933,
+          "family": "CARDIAC-FM (ECG)",
+          "is_rs": true
+        }
+      },
+      "pairs": [
+        {
+          "bar": "CARDIAC-FM (ECG)",
+          "vs": "ECG-FM",
+          "delta": 0.008704219793145373,
+          "ci_lo": -0.016287757711520603,
+          "ci_hi": 0.033029847680325596,
+          "p": 0.481,
+          "sig": false
+        },
+        {
+          "bar": "CARDIAC-FM (ECG)",
+          "vs": "ECGFounder",
+          "delta": 0.05017494592205222,
+          "ci_lo": 0.023477763598543526,
+          "ci_hi": 0.07833813718834114,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG)",
+          "vs": "DeepECG-SSL",
+          "delta": 0.08932350737539824,
+          "ci_lo": 0.0636514176087693,
+          "ci_hi": 0.11458416349807973,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG)",
+          "vs": "DeepECG-SL",
+          "delta": 0.07562995452262126,
+          "ci_lo": 0.04923304755653487,
+          "ci_hi": 0.10343402178897113,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG) +RS",
+          "vs": "ECG-FM +RS",
+          "delta": -0.007256824645007059,
+          "ci_lo": -0.03131834009300912,
+          "ci_hi": 0.017488211603847725,
+          "p": 0.565,
+          "sig": false
+        },
+        {
+          "bar": "CARDIAC-FM (ECG) +RS",
+          "vs": "ECGFounder +RS",
+          "delta": 0.006281704685866155,
+          "ci_lo": -0.01930188890630528,
+          "ci_hi": 0.033928746302246335,
+          "p": 0.678,
+          "sig": false
+        },
+        {
+          "bar": "CARDIAC-FM (ECG) +RS",
+          "vs": "DeepECG-SSL +RS",
+          "delta": 0.06192847903426318,
+          "ci_lo": 0.03542852335733744,
+          "ci_hi": 0.08916727902761871,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG) +RS",
+          "vs": "DeepECG-SL +RS",
+          "delta": 0.03071055797785272,
+          "ci_lo": 0.0033944551963967923,
+          "ci_hi": 0.058653445712119515,
+          "p": 0.027,
+          "sig": true
+        }
+      ]
+    }
+  },
+  "CHS|hf5": {
+    "n": 6314,
+    "pos": 489,
+    "neg": 5825,
+    "auroc": {
+      "bars": {
+        "Risk Score": {
+          "point": 0.7509118196898286,
+          "ci_lo": 0.727506297339758,
+          "ci_hi": 0.7722339889588105,
+          "family": "Risk Score",
+          "is_rs": false
+        },
+        "ECG-FM": {
+          "point": 0.6545571675575098,
+          "ci_lo": 0.6287316938308012,
+          "ci_hi": 0.6808770022029718,
+          "family": "ECG-FM",
+          "is_rs": false
+        },
+        "ECGFounder": {
+          "point": 0.6672856052028753,
+          "ci_lo": 0.6423169909686932,
+          "ci_hi": 0.6935627671432458,
+          "family": "ECGFounder",
+          "is_rs": false
+        },
+        "DeepECG-SSL": {
+          "point": 0.6144313085301526,
+          "ci_lo": 0.5900013428473629,
+          "ci_hi": 0.6394273326487445,
+          "family": "DeepECG-SSL",
+          "is_rs": false
+        },
+        "DeepECG-SL": {
+          "point": 0.6666786030876712,
+          "ci_lo": 0.6423438523043437,
+          "ci_hi": 0.6892839771101573,
+          "family": "DeepECG-SL",
+          "is_rs": false
+        },
+        "CARDIAC-FM (ECG)": {
+          "point": 0.7196229495247374,
+          "ci_lo": 0.6947512484969764,
+          "ci_hi": 0.7431953623493686,
+          "family": "CARDIAC-FM (ECG)",
+          "is_rs": false
+        },
+        "ECG-FM +RS": {
+          "point": 0.7473656494378472,
+          "ci_lo": 0.7262984982929163,
+          "ci_hi": 0.7675264224966429,
+          "family": "ECG-FM",
+          "is_rs": true
+        },
+        "ECGFounder +RS": {
+          "point": 0.7834115344444736,
+          "ci_lo": 0.7617457717861625,
+          "ci_hi": 0.8037764290792281,
+          "family": "ECGFounder",
+          "is_rs": true
+        },
+        "DeepECG-SSL +RS": {
+          "point": 0.6966558712270816,
+          "ci_lo": 0.6769856850715746,
+          "ci_hi": 0.7159938474771146,
+          "family": "DeepECG-SSL",
+          "is_rs": true
+        },
+        "DeepECG-SL +RS": {
+          "point": 0.7577857939036485,
+          "ci_lo": 0.7348685852708076,
+          "ci_hi": 0.7780633420223456,
+          "family": "DeepECG-SL",
+          "is_rs": true
+        },
+        "CARDIAC-FM (ECG) +RS": {
+          "point": 0.7922560713376691,
+          "ci_lo": 0.7712862810149468,
+          "ci_hi": 0.8121003800345805,
+          "family": "CARDIAC-FM (ECG)",
+          "is_rs": true
+        }
+      },
+      "pairs": [
+        {
+          "bar": "CARDIAC-FM (ECG)",
+          "vs": "ECG-FM",
+          "delta": 0.06470541720424446,
+          "ci_lo": 0.03903365895187695,
+          "ci_hi": 0.09120732510071357,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG)",
+          "vs": "ECGFounder",
+          "delta": 0.05158945838489692,
+          "ci_lo": 0.022581619667008876,
+          "ci_hi": 0.07979543080825363,
+          "p": 0.002,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG)",
+          "vs": "DeepECG-SSL",
+          "delta": 0.10487174833460597,
+          "ci_lo": 0.07580497555666725,
+          "ci_hi": 0.13267818619061403,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG)",
+          "vs": "DeepECG-SL",
+          "delta": 0.05289594767283675,
+          "ci_lo": 0.02536348157315,
+          "ci_hi": 0.08244526799898182,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG) +RS",
+          "vs": "ECG-FM +RS",
+          "delta": 0.044930319562565275,
+          "ci_lo": 0.029568314068300953,
+          "ci_hi": 0.05997356433818691,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG) +RS",
+          "vs": "ECGFounder +RS",
+          "delta": 0.008619922237727867,
+          "ci_lo": -0.004322651991890269,
+          "ci_hi": 0.021632867286307256,
+          "p": 0.199,
+          "sig": false
+        },
+        {
+          "bar": "CARDIAC-FM (ECG) +RS",
+          "vs": "DeepECG-SSL +RS",
+          "delta": 0.09570364218822684,
+          "ci_lo": 0.07520815889482788,
+          "ci_hi": 0.11609325328909832,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG) +RS",
+          "vs": "DeepECG-SL +RS",
+          "delta": 0.0345965052616797,
+          "ci_lo": 0.020555745719125378,
+          "ci_hi": 0.0483313673345796,
+          "p": 0.0,
+          "sig": true
+        }
+      ]
+    },
+    "auprc": {
+      "bars": {
+        "Risk Score": {
+          "point": 0.21578628509310602,
+          "ci_lo": 0.190932421931918,
+          "ci_hi": 0.2485530717111972,
+          "family": "Risk Score",
+          "is_rs": false
+        },
+        "ECG-FM": {
+          "point": 0.1532839870741993,
+          "ci_lo": 0.13487443591488799,
+          "ci_hi": 0.17983681957583328,
+          "family": "ECG-FM",
+          "is_rs": false
+        },
+        "ECGFounder": {
+          "point": 0.15678330954139116,
+          "ci_lo": 0.13858714763562072,
+          "ci_hi": 0.1843994607926742,
+          "family": "ECGFounder",
+          "is_rs": false
+        },
+        "DeepECG-SSL": {
+          "point": 0.11567079653498226,
+          "ci_lo": 0.10449528267390445,
+          "ci_hi": 0.13250981362714478,
+          "family": "DeepECG-SSL",
+          "is_rs": false
+        },
+        "DeepECG-SL": {
+          "point": 0.13796319835448412,
+          "ci_lo": 0.12434698986047199,
+          "ci_hi": 0.15655096679935487,
+          "family": "DeepECG-SL",
+          "is_rs": false
+        },
+        "CARDIAC-FM (ECG)": {
+          "point": 0.21383173213746778,
+          "ci_lo": 0.18583835994332712,
+          "ci_hi": 0.24805463904281655,
+          "family": "CARDIAC-FM (ECG)",
+          "is_rs": false
+        },
+        "ECG-FM +RS": {
+          "point": 0.19320216243827215,
+          "ci_lo": 0.1713262596856152,
+          "ci_hi": 0.22171841507477696,
+          "family": "ECG-FM",
+          "is_rs": true
+        },
+        "ECGFounder +RS": {
+          "point": 0.25260968969997993,
+          "ci_lo": 0.22344734386202575,
+          "ci_hi": 0.290232789107006,
+          "family": "ECGFounder",
+          "is_rs": true
+        },
+        "DeepECG-SSL +RS": {
+          "point": 0.1478997725305055,
+          "ci_lo": 0.13134305361618703,
+          "ci_hi": 0.17107156415437558,
+          "family": "DeepECG-SSL",
+          "is_rs": true
+        },
+        "DeepECG-SL +RS": {
+          "point": 0.2110102228013614,
+          "ci_lo": 0.18840727020933665,
+          "ci_hi": 0.23788306384863597,
+          "family": "DeepECG-SL",
+          "is_rs": true
+        },
+        "CARDIAC-FM (ECG) +RS": {
+          "point": 0.2741256413595984,
+          "ci_lo": 0.24189885568440733,
+          "ci_hi": 0.3114572402256082,
+          "family": "CARDIAC-FM (ECG)",
+          "is_rs": true
+        }
+      },
+      "pairs": [
+        {
+          "bar": "CARDIAC-FM (ECG)",
+          "vs": "ECG-FM",
+          "delta": 0.060551294298665154,
+          "ci_lo": 0.03384312655423331,
+          "ci_hi": 0.09018776424251608,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG)",
+          "vs": "ECGFounder",
+          "delta": 0.05637703695318338,
+          "ci_lo": 0.025660360462348434,
+          "ci_hi": 0.08923480586344384,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG)",
+          "vs": "DeepECG-SSL",
+          "delta": 0.09822527065825105,
+          "ci_lo": 0.06861732033615238,
+          "ci_hi": 0.1303813512022679,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG)",
+          "vs": "DeepECG-SL",
+          "delta": 0.07628343191205741,
+          "ci_lo": 0.04638792386349934,
+          "ci_hi": 0.10891952983443852,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG) +RS",
+          "vs": "ECG-FM +RS",
+          "delta": 0.08093287718570445,
+          "ci_lo": 0.05213185990352803,
+          "ci_hi": 0.11166994725315851,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG) +RS",
+          "vs": "ECGFounder +RS",
+          "delta": 0.020340421667808615,
+          "ci_lo": -0.007365271077467144,
+          "ci_hi": 0.048319345704974266,
+          "p": 0.155,
+          "sig": false
+        },
+        {
+          "bar": "CARDIAC-FM (ECG) +RS",
+          "vs": "DeepECG-SSL +RS",
+          "delta": 0.1265517358064824,
+          "ci_lo": 0.09522496500984175,
+          "ci_hi": 0.15954263320362605,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG) +RS",
+          "vs": "DeepECG-SL +RS",
+          "delta": 0.06327082553133316,
+          "ci_lo": 0.03509882123486794,
+          "ci_hi": 0.09267643107554811,
+          "p": 0.0,
+          "sig": true
+        }
+      ]
+    }
+  },
+  "MESA|af5": {
+    "n": 7412,
+    "pos": 436,
+    "neg": 6976,
+    "auroc": {
+      "bars": {
+        "Risk Score": {
+          "point": 0.7705800621791095,
+          "ci_lo": 0.7489844687026556,
+          "ci_hi": 0.7910114166000336,
+          "family": "Risk Score",
+          "is_rs": false
+        },
+        "ECG-FM": {
+          "point": 0.6852930558770306,
+          "ci_lo": 0.6558951710583074,
+          "ci_hi": 0.7126216613908235,
+          "family": "ECG-FM",
+          "is_rs": false
+        },
+        "ECGFounder": {
+          "point": 0.6048121738490027,
+          "ci_lo": 0.5764340698252461,
+          "ci_hi": 0.6339752184422608,
+          "family": "ECGFounder",
+          "is_rs": false
+        },
+        "DeepECG-SSL": {
+          "point": 0.625493993824173,
+          "ci_lo": 0.5964526229510353,
+          "ci_hi": 0.654558436921345,
+          "family": "DeepECG-SSL",
+          "is_rs": false
+        },
+        "DeepECG-SL": {
+          "point": 0.6094913885615689,
+          "ci_lo": 0.5815607886936074,
+          "ci_hi": 0.6380187510520999,
+          "family": "DeepECG-SL",
+          "is_rs": false
+        },
+        "CARDIAC-FM (ECG)": {
+          "point": 0.7089907862343237,
+          "ci_lo": 0.6833744035908174,
+          "ci_hi": 0.7364149232493056,
+          "family": "CARDIAC-FM (ECG)",
+          "is_rs": false
+        },
+        "ECG-FM +RS": {
+          "point": 0.7843158851317229,
+          "ci_lo": 0.7639212309175364,
+          "ci_hi": 0.8050636093079286,
+          "family": "ECG-FM",
+          "is_rs": true
+        },
+        "ECGFounder +RS": {
+          "point": 0.7647859502567124,
+          "ci_lo": 0.7447309435101211,
+          "ci_hi": 0.7856704474318239,
+          "family": "ECGFounder",
+          "is_rs": true
+        },
+        "DeepECG-SSL +RS": {
+          "point": 0.6999930298375557,
+          "ci_lo": 0.675706345412318,
+          "ci_hi": 0.7235702454286256,
+          "family": "DeepECG-SSL",
+          "is_rs": true
+        },
+        "DeepECG-SL +RS": {
+          "point": 0.7652538059717195,
+          "ci_lo": 0.7439926405605589,
+          "ci_hi": 0.7852339903259407,
+          "family": "DeepECG-SL",
+          "is_rs": true
+        },
+        "CARDIAC-FM (ECG) +RS": {
+          "point": 0.7804191697878966,
+          "ci_lo": 0.7592156150708063,
+          "ci_hi": 0.801328777630776,
+          "family": "CARDIAC-FM (ECG)",
+          "is_rs": true
+        }
+      },
+      "pairs": [
+        {
+          "bar": "CARDIAC-FM (ECG)",
+          "vs": "ECG-FM",
+          "delta": 0.02361913035058602,
+          "ci_lo": 0.0014686863808287265,
+          "ci_hi": 0.045946423123053616,
+          "p": 0.037,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG)",
+          "vs": "ECGFounder",
+          "delta": 0.10417899985402113,
+          "ci_lo": 0.07117202459546754,
+          "ci_hi": 0.1378950224491835,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG)",
+          "vs": "DeepECG-SSL",
+          "delta": 0.0837196565320943,
+          "ci_lo": 0.053455018286812886,
+          "ci_hi": 0.11401533222029918,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG)",
+          "vs": "DeepECG-SL",
+          "delta": 0.09894815481388351,
+          "ci_lo": 0.06702905209736125,
+          "ci_hi": 0.13207745198478665,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG) +RS",
+          "vs": "ECG-FM +RS",
+          "delta": -0.0039014530816008745,
+          "ci_lo": -0.015349547070953654,
+          "ci_hi": 0.007671354210504075,
+          "p": 0.504,
+          "sig": false
+        },
+        {
+          "bar": "CARDIAC-FM (ECG) +RS",
+          "vs": "ECGFounder +RS",
+          "delta": 0.015689549293514852,
+          "ci_lo": 0.000961874197773721,
+          "ci_hi": 0.031249235583599856,
+          "p": 0.035,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG) +RS",
+          "vs": "DeepECG-SSL +RS",
+          "delta": 0.0803993322781647,
+          "ci_lo": 0.06188956007753986,
+          "ci_hi": 0.09907547535192744,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG) +RS",
+          "vs": "DeepECG-SL +RS",
+          "delta": 0.015262339488995035,
+          "ci_lo": 0.000728916244949851,
+          "ci_hi": 0.030157213329054803,
+          "p": 0.037,
+          "sig": true
+        }
+      ]
+    },
+    "auprc": {
+      "bars": {
+        "Risk Score": {
+          "point": 0.17746408588952947,
+          "ci_lo": 0.15471311208988373,
+          "ci_hi": 0.2083528301497613,
+          "family": "Risk Score",
+          "is_rs": false
+        },
+        "ECG-FM": {
+          "point": 0.17572319648022686,
+          "ci_lo": 0.14865760160290362,
+          "ci_hi": 0.20929285852463497,
+          "family": "ECG-FM",
+          "is_rs": false
+        },
+        "ECGFounder": {
+          "point": 0.12032172924073199,
+          "ci_lo": 0.0991575160870441,
+          "ci_hi": 0.14833504660446167,
+          "family": "ECGFounder",
+          "is_rs": false
+        },
+        "DeepECG-SSL": {
+          "point": 0.10771531863881934,
+          "ci_lo": 0.09408015427886494,
+          "ci_hi": 0.12624665025421095,
+          "family": "DeepECG-SSL",
+          "is_rs": false
+        },
+        "DeepECG-SL": {
+          "point": 0.08945701769524392,
+          "ci_lo": 0.08043209382086104,
+          "ci_hi": 0.10411637811282168,
+          "family": "DeepECG-SL",
+          "is_rs": false
+        },
+        "CARDIAC-FM (ECG)": {
+          "point": 0.1767051082529331,
+          "ci_lo": 0.15056376601733404,
+          "ci_hi": 0.2122490462327215,
+          "family": "CARDIAC-FM (ECG)",
+          "is_rs": false
+        },
+        "ECG-FM +RS": {
+          "point": 0.22302760821345566,
+          "ci_lo": 0.19280962286796396,
+          "ci_hi": 0.25909557484772705,
+          "family": "ECG-FM",
+          "is_rs": true
+        },
+        "ECGFounder +RS": {
+          "point": 0.18863760259644632,
+          "ci_lo": 0.1613651354063085,
+          "ci_hi": 0.22158713372617853,
+          "family": "ECGFounder",
+          "is_rs": true
+        },
+        "DeepECG-SSL +RS": {
+          "point": 0.15329203107127107,
+          "ci_lo": 0.1299617064399943,
+          "ci_hi": 0.18581626455696043,
+          "family": "DeepECG-SSL",
+          "is_rs": true
+        },
+        "DeepECG-SL +RS": {
+          "point": 0.15571977311324145,
+          "ci_lo": 0.13937240698908404,
+          "ci_hi": 0.17905335565858074,
+          "family": "DeepECG-SL",
+          "is_rs": true
+        },
+        "CARDIAC-FM (ECG) +RS": {
+          "point": 0.21901583564169785,
+          "ci_lo": 0.18975763219020583,
+          "ci_hi": 0.2561960849260985,
+          "family": "CARDIAC-FM (ECG)",
+          "is_rs": true
+        }
+      },
+      "pairs": [
+        {
+          "bar": "CARDIAC-FM (ECG)",
+          "vs": "ECG-FM",
+          "delta": 0.00203047151493381,
+          "ci_lo": -0.026864900419585364,
+          "ci_hi": 0.031232353911720374,
+          "p": 0.926,
+          "sig": false
+        },
+        {
+          "bar": "CARDIAC-FM (ECG)",
+          "vs": "ECGFounder",
+          "delta": 0.057933745801736554,
+          "ci_lo": 0.03163824977022471,
+          "ci_hi": 0.08675677537551685,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG)",
+          "vs": "DeepECG-SSL",
+          "delta": 0.07093077518444864,
+          "ci_lo": 0.04177437552445592,
+          "ci_hi": 0.10298574992862453,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG)",
+          "vs": "DeepECG-SL",
+          "delta": 0.08889860105542312,
+          "ci_lo": 0.0612511009048111,
+          "ci_hi": 0.11957104453092343,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG) +RS",
+          "vs": "ECG-FM +RS",
+          "delta": -0.004464794817011791,
+          "ci_lo": -0.034203474182097356,
+          "ci_hi": 0.026101993359847996,
+          "p": 0.755,
+          "sig": false
+        },
+        {
+          "bar": "CARDIAC-FM (ECG) +RS",
+          "vs": "ECGFounder +RS",
+          "delta": 0.030686639869752036,
+          "ci_lo": 0.0029354648087067193,
+          "ci_hi": 0.06074379553236108,
+          "p": 0.029,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG) +RS",
+          "vs": "DeepECG-SSL +RS",
+          "delta": 0.06459578588324758,
+          "ci_lo": 0.032713114618663684,
+          "ci_hi": 0.09727907042108923,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG) +RS",
+          "vs": "DeepECG-SL +RS",
+          "delta": 0.0632430333365297,
+          "ci_lo": 0.03181515167042795,
+          "ci_hi": 0.09599105148132149,
+          "p": 0.0,
+          "sig": true
+        }
+      ]
+    }
+  },
+  "MESA|hf5": {
+    "n": 8208,
+    "pos": 169,
+    "neg": 8039,
+    "auroc": {
+      "bars": {
+        "Risk Score": {
+          "point": 0.7885934766239435,
+          "ci_lo": 0.7534871973978924,
+          "ci_hi": 0.8195689136760069,
+          "family": "Risk Score",
+          "is_rs": false
+        },
+        "ECG-FM": {
+          "point": 0.6613682852308016,
+          "ci_lo": 0.6167372667712357,
+          "ci_hi": 0.7063804706493713,
+          "family": "ECG-FM",
+          "is_rs": false
+        },
+        "ECGFounder": {
+          "point": 0.6666450756703084,
+          "ci_lo": 0.6216648351122597,
+          "ci_hi": 0.7141866463122455,
+          "family": "ECGFounder",
+          "is_rs": false
+        },
+        "DeepECG-SSL": {
+          "point": 0.6830591399471952,
+          "ci_lo": 0.6428538463746631,
+          "ci_hi": 0.7233098942212924,
+          "family": "DeepECG-SSL",
+          "is_rs": false
+        },
+        "DeepECG-SL": {
+          "point": 0.6657515028437551,
+          "ci_lo": 0.6267784049798651,
+          "ci_hi": 0.7062148578932144,
+          "family": "DeepECG-SL",
+          "is_rs": false
+        },
+        "CARDIAC-FM (ECG)": {
+          "point": 0.7516088359189779,
+          "ci_lo": 0.7111619869408822,
+          "ci_hi": 0.7933624615502384,
+          "family": "CARDIAC-FM (ECG)",
+          "is_rs": false
+        },
+        "ECG-FM +RS": {
+          "point": 0.7558602993836997,
+          "ci_lo": 0.7228747283030728,
+          "ci_hi": 0.7883986976212856,
+          "family": "ECG-FM",
+          "is_rs": true
+        },
+        "ECGFounder +RS": {
+          "point": 0.8122356176362128,
+          "ci_lo": 0.7799930957882101,
+          "ci_hi": 0.8414841920784106,
+          "family": "ECGFounder",
+          "is_rs": true
+        },
+        "DeepECG-SSL +RS": {
+          "point": 0.7624664082126261,
+          "ci_lo": 0.7302886961565328,
+          "ci_hi": 0.7914310487851016,
+          "family": "DeepECG-SSL",
+          "is_rs": true
+        },
+        "DeepECG-SL +RS": {
+          "point": 0.7852260172487525,
+          "ci_lo": 0.75059158716641,
+          "ci_hi": 0.8146984449330225,
+          "family": "DeepECG-SL",
+          "is_rs": true
+        },
+        "CARDIAC-FM (ECG) +RS": {
+          "point": 0.8258725400065214,
+          "ci_lo": 0.7967051342162579,
+          "ci_hi": 0.8525112598272769,
+          "family": "CARDIAC-FM (ECG)",
+          "is_rs": true
+        }
+      },
+      "pairs": [
+        {
+          "bar": "CARDIAC-FM (ECG)",
+          "vs": "ECG-FM",
+          "delta": 0.0901530512126166,
+          "ci_lo": 0.0456666686294845,
+          "ci_hi": 0.13447027103815637,
+          "p": 0.001,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG)",
+          "vs": "ECGFounder",
+          "delta": 0.08490520951485768,
+          "ci_lo": 0.030466877080740265,
+          "ci_hi": 0.14076189964455818,
+          "p": 0.004,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG)",
+          "vs": "DeepECG-SSL",
+          "delta": 0.0685833506920037,
+          "ci_lo": 0.032065399005293,
+          "ci_hi": 0.10444708893257781,
+          "p": 0.001,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG)",
+          "vs": "DeepECG-SL",
+          "delta": 0.08632141571672418,
+          "ci_lo": 0.04062120240749428,
+          "ci_hi": 0.13081291573402148,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG) +RS",
+          "vs": "ECG-FM +RS",
+          "delta": 0.06980096658965061,
+          "ci_lo": 0.043987502493391985,
+          "ci_hi": 0.09623911832184959,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG) +RS",
+          "vs": "ECGFounder +RS",
+          "delta": 0.01369674832234278,
+          "ci_lo": -0.006146239007913307,
+          "ci_hi": 0.03458296131801247,
+          "p": 0.168,
+          "sig": false
+        },
+        {
+          "bar": "CARDIAC-FM (ECG) +RS",
+          "vs": "DeepECG-SSL +RS",
+          "delta": 0.06341425933191079,
+          "ci_lo": 0.0420388107973628,
+          "ci_hi": 0.08474303524754692,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG) +RS",
+          "vs": "DeepECG-SL +RS",
+          "delta": 0.04081326940926298,
+          "ci_lo": 0.023660744845210892,
+          "ci_hi": 0.05914132730159411,
+          "p": 0.0,
+          "sig": true
+        }
+      ]
+    },
+    "auprc": {
+      "bars": {
+        "Risk Score": {
+          "point": 0.07148387257743463,
+          "ci_lo": 0.058331210778137146,
+          "ci_hi": 0.09430021147575368,
+          "family": "Risk Score",
+          "is_rs": false
+        },
+        "ECG-FM": {
+          "point": 0.04936094712964725,
+          "ci_lo": 0.03797134092708299,
+          "ci_hi": 0.07222771293518764,
+          "family": "ECG-FM",
+          "is_rs": false
+        },
+        "ECGFounder": {
+          "point": 0.0704934989929344,
+          "ci_lo": 0.04967719621232233,
+          "ci_hi": 0.11397444522215022,
+          "family": "ECGFounder",
+          "is_rs": false
+        },
+        "DeepECG-SSL": {
+          "point": 0.057555668085228856,
+          "ci_lo": 0.04343363530108281,
+          "ci_hi": 0.08703901826369662,
+          "family": "DeepECG-SSL",
+          "is_rs": false
+        },
+        "DeepECG-SL": {
+          "point": 0.03872046707528226,
+          "ci_lo": 0.03240308718884154,
+          "ci_hi": 0.054017347203602885,
+          "family": "DeepECG-SL",
+          "is_rs": false
+        },
+        "CARDIAC-FM (ECG)": {
+          "point": 0.10689588251505686,
+          "ci_lo": 0.0761621621268355,
+          "ci_hi": 0.15873764735880794,
+          "family": "CARDIAC-FM (ECG)",
+          "is_rs": false
+        },
+        "ECG-FM +RS": {
+          "point": 0.0665000053334623,
+          "ci_lo": 0.050809994171812124,
+          "ci_hi": 0.09837010931299943,
+          "family": "ECG-FM",
+          "is_rs": true
+        },
+        "ECGFounder +RS": {
+          "point": 0.09599686067928236,
+          "ci_lo": 0.07378934160492412,
+          "ci_hi": 0.12956716796503423,
+          "family": "ECGFounder",
+          "is_rs": true
+        },
+        "DeepECG-SSL +RS": {
+          "point": 0.07442312206306498,
+          "ci_lo": 0.05464176031620215,
+          "ci_hi": 0.114816908177038,
+          "family": "DeepECG-SSL",
+          "is_rs": true
+        },
+        "DeepECG-SL +RS": {
+          "point": 0.07042982216728884,
+          "ci_lo": 0.055279373568682115,
+          "ci_hi": 0.09379939504880778,
+          "family": "DeepECG-SL",
+          "is_rs": true
+        },
+        "CARDIAC-FM (ECG) +RS": {
+          "point": 0.13752618992275986,
+          "ci_lo": 0.09891445198827435,
+          "ci_hi": 0.18984219108983466,
+          "family": "CARDIAC-FM (ECG)",
+          "is_rs": true
+        }
+      },
+      "pairs": [
+        {
+          "bar": "CARDIAC-FM (ECG)",
+          "vs": "ECG-FM",
+          "delta": 0.06008096251283036,
+          "ci_lo": 0.024815453412583146,
+          "ci_hi": 0.10185913964420996,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG)",
+          "vs": "ECGFounder",
+          "delta": 0.03649950561418329,
+          "ci_lo": -0.005214439958764505,
+          "ci_hi": 0.08091192090708424,
+          "p": 0.084,
+          "sig": false
+        },
+        {
+          "bar": "CARDIAC-FM (ECG)",
+          "vs": "DeepECG-SSL",
+          "delta": 0.050769759060947724,
+          "ci_lo": 0.013234403545201924,
+          "ci_hi": 0.09372180657900732,
+          "p": 0.008,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG)",
+          "vs": "DeepECG-SL",
+          "delta": 0.07173400978609196,
+          "ci_lo": 0.036401140932387284,
+          "ci_hi": 0.11589056729618202,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG) +RS",
+          "vs": "ECG-FM +RS",
+          "delta": 0.06996250402001246,
+          "ci_lo": 0.031246037050292847,
+          "ci_hi": 0.1143149026342016,
+          "p": 0.0,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG) +RS",
+          "vs": "ECGFounder +RS",
+          "delta": 0.04153577197040652,
+          "ci_lo": 0.009581092472099683,
+          "ci_hi": 0.07670026811859657,
+          "p": 0.008,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG) +RS",
+          "vs": "DeepECG-SSL +RS",
+          "delta": 0.06105968525766401,
+          "ci_lo": 0.01770900931477983,
+          "ci_hi": 0.10741941583122684,
+          "p": 0.004,
+          "sig": true
+        },
+        {
+          "bar": "CARDIAC-FM (ECG) +RS",
+          "vs": "DeepECG-SL +RS",
+          "delta": 0.06833497437136724,
+          "ci_lo": 0.03326471970147304,
+          "ci_hi": 0.1084527663900857,
+          "p": 0.0,
+          "sig": true
+        }
+      ]
+    }
+  }
+}
