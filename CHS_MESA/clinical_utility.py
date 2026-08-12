@@ -26,13 +26,22 @@ Usage: python clinical_utility.py [--B 1000]
 import argparse, os, warnings
 import numpy as np, pandas as pd
 import matplotlib
+
+# --- repo path configuration (see docs/PATHS.md) ---
+import os as _os, sys as _sys
+_pd = _os.path.dirname(_os.path.abspath(__file__))
+while _pd != "/" and not _os.path.isdir(_os.path.join(_pd, "common")):
+    _pd = _os.path.dirname(_pd)
+_sys.path.insert(0, _os.path.join(_pd, "common"))
+from paths import P
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 warnings.filterwarnings("ignore")
 
-EV = "/gpfs/projects/trend/bojun/multimodal_rep/eval"
+EV = P("EVAL_ROOT")
 OR = EV  # our-model root; --ours_root overrides (e.g. .../eval_3 for seed 3). Risk Score stays under EV.
-RS = "/gpfs/projects/trend/bojun/CHS_MESA/risk_score/computed"
+RS = P("RISK_ROOT", "computed")
 RISK_COL = {"af5": "charge_mean", "hf5": "prevent_mean"}
 EPS = 1e-6
 

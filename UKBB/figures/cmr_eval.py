@@ -16,11 +16,20 @@ Usage: python cmr_eval.py
 import os, argparse
 import numpy as np, pandas as pd
 import matplotlib
+
+# --- repo path configuration (see docs/PATHS.md) ---
+import os as _os, sys as _sys
+_pd = _os.path.dirname(_os.path.abspath(__file__))
+while _pd != "/" and not _os.path.isdir(_os.path.join(_pd, "common")):
+    _pd = _os.path.dirname(_pd)
+_sys.path.insert(0, _os.path.join(_pd, "common"))
+from paths import P
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-EV = "/gpfs/projects/trend/bojun/multimodal_rep/eval"
-IDD = "/gpfs/projects/trend/bojun/CHS_MESA/risk_score/csv_train_valid_test_individual_id_disease"
+EV = P("EVAL_ROOT")
+IDD = P("RISK_ROOT", "csv_train_valid_test_individual_id_disease")
 TRUTH = f"{EV}/UKBB_cmr_true_test.csv"
 FEATS = ["lvm", "lvedv", "lvesv", "lavmin", "lavmax", "laef", "lvef"]
 PAPER_R = {"lvm": 0.79, "lvedv": 0.72, "lvesv": 0.71, "lavmin": 0.67,

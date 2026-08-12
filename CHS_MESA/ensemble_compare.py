@@ -19,9 +19,18 @@ Usage: python ensemble_compare.py [--B 2000] [--ours_root .../eval] [--out ...]
 import argparse, os, warnings
 import numpy as np, pandas as pd
 from scipy.stats import rankdata
+
+# --- repo path configuration (see docs/PATHS.md) ---
+import os as _os, sys as _sys
+_pd = _os.path.dirname(_os.path.abspath(__file__))
+while _pd != "/" and not _os.path.isdir(_os.path.join(_pd, "common")):
+    _pd = _os.path.dirname(_pd)
+_sys.path.insert(0, _os.path.join(_pd, "common"))
+from paths import P
+
 warnings.filterwarnings("ignore")
 
-EV = "/gpfs/projects/trend/bojun/multimodal_rep/eval"
+EV = P("EVAL_ROOT")
 SEEDS = [1, 2, 3, 4]
 
 

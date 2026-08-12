@@ -6,8 +6,15 @@
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=96G
 #SBATCH --time=24:00:00
-#SBATCH --output=/gpfs/projects/trend/bojun/mri/CineMA/logs/stage1_cinema_base_m75_%x_%j.out
-#SBATCH --error=/gpfs/projects/trend/bojun/mri/CineMA/logs/stage1_cinema_base_m75_%x_%j.err
+#SBATCH --output=logs/stage1_cinema_base_m75_%x_%j.out
+#SBATCH --error=logs/stage1_cinema_base_m75_%x_%j.err
+
+# --- repo path configuration (see docs/PATHS.md) ---
+_repo="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+while [ "$_repo" != "/" ] && [ ! -d "$_repo/common" ]; do _repo="$(dirname "$_repo")"; done
+source "$_repo/env/paths.local.sh"
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 
 # Contrastive stage 1 on the 0.75-mask ViT-BASE MRI encoder (cinema_base_conv_224_m75_mg).
 # Identical to submit_stage1_cinema_base.sh except the MRI checkpoint (m75) and the SAVE
@@ -22,8 +29,8 @@ case "$ECG_MODE" in
 esac
 
 module load conda
-conda activate /gpfs/projects/trend/bojun/mri_env
-export LD_LIBRARY_PATH=/gpfs/projects/trend/bojun/mri_env/lib:$LD_LIBRARY_PATH
+conda activate ${CONDA_ENV}
+export LD_LIBRARY_PATH=${CONDA_ENV}/lib:$LD_LIBRARY_PATH
 
 # base architecture dims (MUST match the base pretrain and the downstream run)
 VIEW_ENCODER=conv
@@ -31,16 +38,16 @@ EMBED_DIM=768
 ENC_DEPTH=12
 ENC_HEADS=12
 
-MRI_DIR=/gpfs/projects/trend/data/UKBB/MRI/cropped_new
-ECG_DIR=/gpfs/projects/trend/bojun/mri/outcome/data_train_valid_test_individual/stage1/ecg_tsv
-SPLITS=/gpfs/projects/trend/bojun/mri/outcome/data_train_valid_test_individual/stage1
-MAE_CKPT=/gpfs/projects/trend/bojun/mri/CineMA/checkpoints/cinema_base_conv_224_m75_mg/cinema_best.pth
-ECG_CKPT=/gpfs/projects/trend/bojun/multimodal/mimic_iv_ecg_physionet_pretrained.pt
-SAVE=/gpfs/projects/trend/bojun/mri/CineMA/checkpoints/stage1_cinema_base_m75_ecg${ECG_MODE}
+MRI_DIR=${UKB_MRI_DIR}
+ECG_DIR=${UKB_ECG_ROOT}/stage1/ecg_tsv
+SPLITS=${UKB_ECG_ROOT}/stage1
+MAE_CKPT=${CKPT_ROOT}/cinema_base_conv_224_m75_mg/cinema_best.pth
+ECG_CKPT=${ECG_CKPT}
+SAVE=${CKPT_ROOT}/stage1_cinema_base_m75_ecg${ECG_MODE}
 
 mkdir -p $SAVE
 
-cd /gpfs/projects/trend/bojun/multimodal
+cd "$HERE"
 
 # stage1 runs fp32 (bf16 NaN'd on the base MRI encoder + full ECG). grad clip 5.0 is on.
 # batch 32 on 4 GPUs (nodes=1) ~ the same as the 0.9 base runs; drop to 16 if OOM.

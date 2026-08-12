@@ -22,11 +22,20 @@ from scipy.stats import norm
 from sklearn.experimental import enable_iterative_imputer  # noqa
 from sklearn.impute import IterativeImputer
 from lifelines import CoxPHFitter
+
+# --- repo path configuration (see docs/PATHS.md) ---
+import os as _os, sys as _sys
+_pd = _os.path.dirname(_os.path.abspath(__file__))
+while _pd != "/" and not _os.path.isdir(_os.path.join(_pd, "common")):
+    _pd = _os.path.dirname(_pd)
+_sys.path.insert(0, _os.path.join(_pd, "common"))
+from paths import P
+
 warnings.filterwarnings("ignore")
 
-EV = "/gpfs/projects/trend/bojun/multimodal_rep/eval"
-CP = "/gpfs/projects/trend/bojun/CHS_MESA/risk_score/CHARGE-PREVENT"
-HR = "/gpfs/projects/trend/bojun/CHS_MESA/risk_score/csv_HR"
+EV = P("EVAL_ROOT")
+CP = P("RISK_ROOT", "CHARGE-PREVENT")
+HR = P("RISK_ROOT", "csv_HR")
 FEATS = ["lvef", "laef", "lvm", "lvedv", "lvesv", "lavmin", "lavmax"]
 # traditional risk factors available in charge_prevent_UKBB.csv (the paper additionally had
 # cholesterol/HDL/lipid-lowering, which are not in our file)

@@ -26,13 +26,22 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import roc_auc_score, average_precision_score
+
+# --- repo path configuration (see docs/PATHS.md) ---
+import os as _os, sys as _sys
+_pd = _os.path.dirname(_os.path.abspath(__file__))
+while _pd != "/" and not _os.path.isdir(_os.path.join(_pd, "common")):
+    _pd = _os.path.dirname(_pd)
+_sys.path.insert(0, _os.path.join(_pd, "common"))
+from paths import P
+
 warnings.filterwarnings("ignore")
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # cardiacfm_new/
 sys.path.insert(0, os.path.join(_ROOT, "common", "risk"))
 from risk_score import MAPS                        # per-cohort raw->canonical column maps
 
-CP = "/gpfs/projects/trend/bojun/CHS_MESA/risk_score/CHARGE-PREVENT"
-EV = "/gpfs/projects/trend/bojun/multimodal_rep/eval"
+CP = P("RISK_ROOT", "CHARGE-PREVENT")
+EV = P("EVAL_ROOT")
 CANON = ["age", "race", "height", "weight", "sbp", "dbp", "cursmoke", "htnmed",
          "prevdm", "prevhf", "prevmi", "sex", "bmi", "egfr"]
 CHARGE = ["age", "white", "height", "weight", "sbp", "dbp", "cursmoke", "htnmed", "prevdm", "prevhf", "prevmi"]

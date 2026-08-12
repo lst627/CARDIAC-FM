@@ -10,7 +10,16 @@ import argparse, os, glob
 import numpy as np, pandas as pd
 from sklearn.metrics import roc_auc_score, average_precision_score
 
-OUT = "/gpfs/projects/trend/bojun/CHS_MESA/results"
+# --- repo path configuration (see docs/PATHS.md) ---
+import os as _os, sys as _sys
+_pd = _os.path.dirname(_os.path.abspath(__file__))
+while _pd != "/" and not _os.path.isdir(_os.path.join(_pd, "common")):
+    _pd = _os.path.dirname(_pd)
+_sys.path.insert(0, _os.path.join(_pd, "common"))
+from paths import P
+
+
+OUT = P("EXT_RESULTS")
 
 
 def load(coh, outc, model, regime):
@@ -78,7 +87,7 @@ def main():
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--regime", choices=["zs", "fs", "ukb", "both", "all"], default="both")
     ap.add_argument("--out_root", default=OUT,
-                    help="input root to read result.csv from (e.g. /gpfs/.../multimodal_rep/eval)")
+                    help="input root to read result.csv from (e.g. $EVAL_ROOT)")
     ap.add_argument("--out", default=None)
     args = ap.parse_args()
     OUT = args.out_root                                    # redirect all reads to this root

@@ -12,8 +12,17 @@ from sklearn.experimental import enable_iterative_imputer  # noqa
 from sklearn.impute import IterativeImputer
 from sklearn.metrics import roc_auc_score, average_precision_score
 
-CP = "/gpfs/projects/trend/bojun/CHS_MESA/risk_score/CHARGE-PREVENT"
-OUTDIR = "/gpfs/projects/trend/bojun/CHS_MESA/risk_score/computed"
+# --- repo path configuration (see docs/PATHS.md) ---
+import os as _os, sys as _sys
+_pd = _os.path.dirname(_os.path.abspath(__file__))
+while _pd != "/" and not _os.path.isdir(_os.path.join(_pd, "common")):
+    _pd = _os.path.dirname(_pd)
+_sys.path.insert(0, _os.path.join(_pd, "common"))
+from paths import P
+
+
+CP = P("RISK_ROOT", "CHARGE-PREVENT")
+OUTDIR = P("RISK_ROOT", "computed")
 
 # per-cohort raw-column -> canonical name (canonical: age race height weight sbp dbp cursmoke htnmed
 # prevdm prevhf prevmi sex bmi egfr). Matches the R Rmd term mappings exactly.
@@ -95,7 +104,7 @@ def main():
     print(f"[{args.cohort}] wrote {len(out)} rows -> {fout}")
 
     if args.eval:  # standalone Risk Score bars: CHARGE-AF vs af5, PREVENT-HF vs hf5
-        base = ("/gpfs/projects/trend/bojun/multimodal_rep/eval/zeroshot"
+        base = (P("EVAL_ROOT", "zeroshot")
                 if args.cohort in ("CHS", "MESA") else None)
         if base is None:
             print("  (--eval standalone only wired for CHS/MESA external)"); return

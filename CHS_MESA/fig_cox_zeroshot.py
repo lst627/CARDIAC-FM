@@ -11,10 +11,19 @@ import argparse, os, json
 import numpy as np, pandas as pd
 from lifelines.utils import concordance_index
 import matplotlib
+
+# --- repo path configuration (see docs/PATHS.md) ---
+import os as _os, sys as _sys
+_pd = _os.path.dirname(_os.path.abspath(__file__))
+while _pd != "/" and not _os.path.isdir(_os.path.join(_pd, "common")):
+    _pd = _os.path.dirname(_pd)
+_sys.path.insert(0, _os.path.join(_pd, "common"))
+from paths import P
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-ZS = "/gpfs/projects/trend/bojun/multimodal_rep/eval/cox_zeroshot"
+ZS = P("EVAL_ROOT", "cox_zeroshot")
 MODELS = [("CARDIAC-FM (ECG)", "m75_seed1", "#009E73"),
           ("ECG-FM", "ecgfm", "#E69F00"),
           ("ECGFounder", "ecgfounder", "#56B4E9"),
@@ -136,7 +145,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--B", type=int, default=2000)
     ap.add_argument("--seed", type=int, default=42)
-    ap.add_argument("--outdir", default="/gpfs/projects/trend/bojun/multimodal_rep/eval/figures")
+    ap.add_argument("--outdir", default=P("EVAL_ROOT", "figures"))
     ap.add_argument("--stats", default=None)
     ap.add_argument("--recompute", action="store_true")
     a = ap.parse_args()

@@ -16,8 +16,17 @@ import argparse, os
 import numpy as np, pandas as pd
 from scipy.stats import pearsonr
 
-EV = "/gpfs/projects/trend/bojun/multimodal_rep/eval"
-MEAS = "/gpfs/projects/trend/bojun/CHS_MESA/MESA/MESA_CMR_features.csv"
+# --- repo path configuration (see docs/PATHS.md) ---
+import os as _os, sys as _sys
+_pd = _os.path.dirname(_os.path.abspath(__file__))
+while _pd != "/" and not _os.path.isdir(_os.path.join(_pd, "common")):
+    _pd = _os.path.dirname(_pd)
+_sys.path.insert(0, _os.path.join(_pd, "common"))
+from paths import P
+
+
+EV = P("EVAL_ROOT")
+MEAS = P("MESA_TABLES", "MESA_CMR_features.csv")
 FEATS = ["lvm", "lvedv", "lvesv", "lavmin", "lavmax", "laef", "lvef"]
 
 

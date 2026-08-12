@@ -5,8 +5,15 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=64G
 #SBATCH --time=02:00:00
-#SBATCH --output=/gpfs/projects/trend/bojun/mri/CineMA/logs/downstream_cinema_%x_%j.out
-#SBATCH --error=/gpfs/projects/trend/bojun/mri/CineMA/logs/downstream_cinema_%x_%j.err
+#SBATCH --output=logs/downstream_cinema_%x_%j.out
+#SBATCH --error=logs/downstream_cinema_%x_%j.err
+
+# --- repo path configuration (see docs/PATHS.md) ---
+_repo="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+while [ "$_repo" != "/" ] && [ ! -d "$_repo/common" ]; do _repo="$(dirname "$_repo")"; done
+source "$_repo/env/paths.local.sh"
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 
 # Usage: sbatch --job-name=ds_af5_ecg submit_downstream_cinema.sh af5 ecg_mri full [stage1_dir] [lr] [size]
 # 4th arg = which contrastive checkpoint dir, e.g. stage1_cinema_base_ecgfull.
@@ -34,25 +41,25 @@ esac
 CKPT_TAG=${CKPT_FILE%.pth}   # for tagging the output dir
 
 module load conda
-conda activate /gpfs/projects/trend/bojun/mri_env
-export LD_LIBRARY_PATH=/gpfs/projects/trend/bojun/mri_env/lib:$LD_LIBRARY_PATH
+conda activate ${CONDA_ENV}
+export LD_LIBRARY_PATH=${CONDA_ENV}/lib:$LD_LIBRARY_PATH
 
 # --view_encoder and --pool MUST match the stage1 contrastive run that produced CL_CKPT.
 VIEW_ENCODER=conv
 
-CKPT_ROOT=/gpfs/projects/trend/bojun/mri/CineMA/checkpoints
+CKPT_ROOT=${CKPT_ROOT}
 CL_CKPT=$CKPT_ROOT/$STAGE1/$CKPT_FILE
-ECG_CKPT=/gpfs/projects/trend/bojun/multimodal/mimic_iv_ecg_physionet_pretrained.pt
-MRI_DIR=/gpfs/projects/trend/data/UKBB/MRI/cropped_new
-ECG_DIR=/gpfs/projects/trend/bojun/mri/outcome/data_train_valid_test_individual/stage1/ecg_tsv
-PHENO_DIR=/gpfs/projects/trend/data/UKBB/Phenotype
+ECG_CKPT=${ECG_CKPT}
+MRI_DIR=${UKB_MRI_DIR}
+ECG_DIR=${UKB_ECG_ROOT}/stage1/ecg_tsv
+PHENO_DIR=${UKB_PHENO_DIR}
 # tag output by outcome + stage1 source + ckpt + lr + selection so runs don't overwrite
 # (OUTCOME was missing before -> af5/hf5 shared a dir and clobbered results.json)
 SAVE=$CKPT_ROOT/downstream_${STAGE1}_${CKPT_TAG}_${OUTCOME}_${MODE}_lr${LR}_${SELECT_BY}
 
 mkdir -p $SAVE
 
-cd /gpfs/projects/trend/bojun/multimodal
+cd "$HERE"
 
 python downstream_ecgmri_cinema.py \
   --outcome $OUTCOME --mode $MODE --training_type $TYPE \

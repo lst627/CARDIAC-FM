@@ -15,7 +15,16 @@ import os
 import numpy as np, pandas as pd
 from scipy.io import loadmat
 
-BASE = "/gpfs/projects/trend/bojun/CHS_MESA"
+# --- repo path configuration (see docs/PATHS.md) ---
+import os as _os, sys as _sys
+_pd = _os.path.dirname(_os.path.abspath(__file__))
+while _pd != "/" and not _os.path.isdir(_os.path.join(_pd, "common")):
+    _pd = _os.path.dirname(_pd)
+_sys.path.insert(0, _os.path.join(_pd, "common"))
+from paths import P
+
+
+BASE = P("CHS_MESA_ROOT")
 COHORTS = {
     "CHS":  dict(data=f"{BASE}/data_train_valid_test_individual_CHS",
                  surv=f"{BASE}/risk_score/csv_train_valid_test_individual_id_disease/CHS_split1.csv", idcol="id"),

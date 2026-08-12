@@ -235,16 +235,21 @@ Access to UK Biobank, CHS, and MESA requires separate application to each study.
 
 ## Configuring paths
 
-> **Important for external users.** Scripts in this repository still carry absolute paths from the
-> authors' compute cluster (e.g. `/gpfs/projects/trend/...`), declared as constants at the top of each
-> `.py` file and as shell variables in each `.sh` file. **They will not resolve on your system.**
->
-> [`docs/PATHS.md`](docs/PATHS.md) maps all of them to ~12 logical roots and lists exactly which
-> file and line to change for each. Read it before running anything.
+Every data, checkpoint, and output location is read from an environment variable — nothing is
+hard-coded to a particular machine. Configure them once:
 
-Additionally, `UKBB/downstream/run_cox.sh`, `UKBB/downstream/run_cox_ecgfm.sh`, and
-`CHS_MESA/run_cox_zeroshot.sh` `source` a cluster-local `config.sh` that is **not** part of this
-repository; `docs/PATHS.md` documents the variables it must define.
+```bash
+cp env/paths.example.sh env/paths.local.sh
+$EDITOR env/paths.local.sh          # fill in your paths
+python common/paths.py              # print what resolved, and what is still unset
+```
+
+`env/paths.local.sh` is gitignored and is the single source of truth: Python reads it through
+[`common/paths.py`](common/paths.py), and the `.sh` run scripts `source` the same file. A variable
+set in the environment (`export EVAL_ROOT=...`) overrides it. Missing variables produce an error
+naming the variable, not a confusing "file not found".
+
+See [`docs/PATHS.md`](docs/PATHS.md) for what each variable means.
 
 ## Known issues
 

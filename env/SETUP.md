@@ -77,5 +77,6 @@ python common/train_eval/cox_test.py --help
 - **Weights** are not committed — see [`weights/README.md`](../weights/README.md) for what each checkpoint
   is and where to download it, then repoint the run scripts' `ECG_CKPT` / `CL_CKPT` at your copies.
   Minimum to run downstream: `ecgfm_mimic_iv_physionet.pt` + `stage1_cinema_m75.pth`.
-- **Absolute cluster paths**: the scripts still carry them. See [`docs/PATHS.md`](../docs/PATHS.md)
-  before running anything, and [`config.example.sh`](config.example.sh) for the survival scripts.
+- **Paths**: every data/checkpoint/output location comes from an environment variable. Run
+  `cp env/paths.example.sh env/paths.local.sh`, fill it in, then check with `python common/paths.py`.
+  See [`docs/PATHS.md`](../docs/PATHS.md).

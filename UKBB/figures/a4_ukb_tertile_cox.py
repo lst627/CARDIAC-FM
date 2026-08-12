@@ -12,12 +12,21 @@ it includes the ECG+MRI arm, which only exists in UKB.
 import argparse, os, warnings
 import numpy as np, pandas as pd
 from lifelines import CoxPHFitter
+
+# --- repo path configuration (see docs/PATHS.md) ---
+import os as _os, sys as _sys
+_pd = _os.path.dirname(_os.path.abspath(__file__))
+while _pd != "/" and not _os.path.isdir(_os.path.join(_pd, "common")):
+    _pd = _os.path.dirname(_pd)
+_sys.path.insert(0, _os.path.join(_pd, "common"))
+from paths import P
+
 warnings.filterwarnings("ignore")
 
-EV = "/gpfs/projects/trend/bojun/multimodal_rep/eval"
+EV = P("EVAL_ROOT")
 OR = EV  # our-model root; --ours_root overrides (e.g. .../eval_3 for seed 3). Risk Score/survival stay under EV.
-HRD = "/gpfs/projects/trend/bojun/CHS_MESA/risk_score/csv_HR"
-RS = "/gpfs/projects/trend/bojun/CHS_MESA/risk_score/computed"
+HRD = P("RISK_ROOT", "csv_HR")
+RS = P("RISK_ROOT", "computed")
 RISK_COL = {"af": "charge_mean", "hf": "prevent_mean"}
 OUT = {"af": ("ttoaf", "afcens", "prevaf", "af5"), "hf": ("ttohf", "hfcens", "prevhf", "hf5")}
 

@@ -6,8 +6,8 @@
 #SBATCH --mem=64G
 #SBATCH --time=08:00:00
 #SBATCH --array=0-3
-#SBATCH --output=/gpfs/projects/trend/bojun/multimodal_rep/eval/logs/deepecg_fewshot_%A_%a.out
-#SBATCH --error=/gpfs/projects/trend/bojun/multimodal_rep/eval/logs/deepecg_fewshot_%A_%a.err
+#SBATCH --output=logs/deepecg_fewshot_%A_%a.out
+#SBATCH --error=logs/deepecg_fewshot_%A_%a.err
 # DeepECG-SL & DeepECG-SSL FEW-SHOT on CHS/MESA broad outcomes, matched to the our-model / ECGFounder
 # few-shot protocol (seed 1, lr 5e-6, patience-3, 20-epoch cap; full fine-tune from the backbone).
 # Fine-tune on each cohort's fraction (train_valid_5_5=10%, train_valid_10_10=20%), then test on the
@@ -17,13 +17,20 @@
 #
 # Array over (model x cohort):  0=deepsl/CHS  1=deepsl/MESA  2=deepssl/CHS  3=deepssl/MESA
 # Resumable: any cell whose result.csv already exists is skipped.
+
+# --- repo path configuration (see docs/PATHS.md) ---
+_repo="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+while [ "$_repo" != "/" ] && [ ! -d "$_repo/common" ]; do _repo="$(dirname "$_repo")"; done
+source "$_repo/env/paths.local.sh"
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 set -u
-D=/gpfs/projects/trend/bojun/multimodal_rep/ECGFounder_DeepSSL/deepecg
-ENV=/gpfs/projects/trend/bojun/mri_env; export PATH="$ENV/bin:$PATH"
+D="$HERE"
+ENV=${CONDA_ENV}; export PATH="$ENV/bin:$PATH"
 export LD_LIBRARY_PATH="$ENV/lib:${LD_LIBRARY_PATH:-}" W=8
-EVAL=/gpfs/projects/trend/bojun/multimodal_rep/eval
-CHS=/gpfs/projects/trend/bojun/CHS_MESA/data_train_valid_test_individual_CHS
-MESA=/gpfs/projects/trend/bojun/CHS_MESA/data_train_valid_test_individual_MESA
+EVAL=${EVAL_ROOT}
+CHS=${CHS_ECG_ROOT}
+MESA=${MESA_ECG_ROOT}
 FRACTIONS="train_valid_5_5 train_valid_10_10"
 mkdir -p "$EVAL/logs"
 

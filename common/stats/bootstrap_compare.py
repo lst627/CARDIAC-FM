@@ -13,8 +13,17 @@ import argparse, os
 import numpy as np, pandas as pd
 from sklearn.metrics import roc_auc_score, average_precision_score
 
-OUT = "/gpfs/projects/trend/bojun/CHS_MESA/results"
-EXT = "/gpfs/projects/trend/bojun/CHS_MESA/result_finetune_from_pretrain_fewshot"
+# --- repo path configuration (see docs/PATHS.md) ---
+import os as _os, sys as _sys
+_pd = _os.path.dirname(_os.path.abspath(__file__))
+while _pd != "/" and not _os.path.isdir(_os.path.join(_pd, "common")):
+    _pd = _os.path.dirname(_pd)
+_sys.path.insert(0, _os.path.join(_pd, "common"))
+from paths import P
+
+
+OUT = P("EXT_RESULTS")
+EXT = P("FEWSHOT_RESULTS")
 # overlap outcomes (both our CL and the paper's ECG-FM/CARDIAC-FM few-shot predictions exist)
 OUTCOMES = ["af5", "hf5", "mi5", "mi10", "is5", "is10", "ces10", "cvddth5", "cvddth10", "dth5", "dth10"]
 NAME = {"af5": "AF", "hf5": "HF", "mi5": "MI5", "mi10": "MI10", "is5": "IS5", "is10": "IS10",
@@ -79,7 +88,7 @@ def main():
     ap.add_argument("--B", type=int, default=2000)
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--ours_root", default=OUT,
-                    help="root for our CL result.csv (e.g. /gpfs/.../multimodal_rep/eval)")
+                    help="root for our CL result.csv (e.g. $EVAL_ROOT)")
     ap.add_argument("--out", default=None)
     args = ap.parse_args()
     OUT = args.ours_root                                   # our-CL predictions read from here

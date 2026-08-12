@@ -31,17 +31,15 @@ produces it, and what consumes it.
 
 ## Pointing the scripts at them
 
-The `.sh` run scripts hold absolute paths in variables such as `ECG_CKPT`, `MAE_CKPT`, `CL_CKPT`, and
-`CKPT_ROOT`. Repoint them at wherever you put these files, e.g.:
+Checkpoint locations are environment variables like everything else. Set them in
+`env/paths.local.sh` (copy it from `env/paths.example.sh`):
 
 ```bash
-ECG_CKPT=/path/to/CARDIAC-FM/weights/ecgfm_mimic_iv_physionet.pt
-MAE_CKPT=/path/to/CARDIAC-FM/weights/cinema_mae_m75.pth
-CL_CKPT=/path/to/CARDIAC-FM/weights/stage1_cinema_m75.pth
+export ECG_CKPT=/path/to/CARDIAC-FM/weights/ecgfm_mimic_iv_physionet.pt
+export CKPT_ROOT=/path/to/checkpoints          # where MAE / stage-1 / downstream runs live
 ```
 
-See [`docs/PATHS.md`](../docs/PATHS.md) for the full list of paths that need repointing, and
-[`env/config.example.sh`](../env/config.example.sh) for the survival scripts' `ECGFM` / `CKPT_ROOT`.
+See [`docs/PATHS.md`](../docs/PATHS.md) for every variable and how resolution works.
 
 If you place the checkpoints in this directory, they are already covered by `.gitignore`.
 

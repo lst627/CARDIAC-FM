@@ -23,6 +23,15 @@ Usage: python make_figures.py [--our_seed 1] [--ecgfm_seed 1] [--B 2000]
 import os, argparse, json, warnings
 import numpy as np, pandas as pd
 import matplotlib
+
+# --- repo path configuration (see docs/PATHS.md) ---
+import os as _os, sys as _sys
+_pd = _os.path.dirname(_os.path.abspath(__file__))
+while _pd != "/" and not _os.path.isdir(_os.path.join(_pd, "common")):
+    _pd = _os.path.dirname(_pd)
+_sys.path.insert(0, _os.path.join(_pd, "common"))
+from paths import P
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
@@ -30,8 +39,8 @@ from scipy.stats import rankdata
 from sklearn.metrics import average_precision_score
 warnings.filterwarnings("ignore")
 
-EV = "/gpfs/projects/trend/bojun/multimodal_rep/eval"
-RS = "/gpfs/projects/trend/bojun/CHS_MESA/risk_score/computed"
+EV = P("EVAL_ROOT")
+RS = P("RISK_ROOT", "computed")
 RISK_COL = {"af5": "charge_mean", "hf5": "prevent_mean"}
 OUT = f"{EV}/figures"; os.makedirs(OUT, exist_ok=True)
 B = 2000; RNG = np.random.default_rng(42)
@@ -40,7 +49,7 @@ STAR_REF = "ECG-FM"        # star = significantly beats this family (its +RS for
 
 def our_root(seed):
     """our m75 predictions live in eval/ for seed 1 (canonical) and eval_<S>/ for 0/2/3."""
-    return EV if seed == 1 else f"/gpfs/projects/trend/bojun/multimodal_rep/eval_{seed}"
+    return EV if seed == 1 else f"{P('EVAL_ROOT')}_{seed}"
 
 # model family -> colour (Okabe-Ito, fixed order; Risk Score = neutral grey)
 FAM_COLOR = {"Risk Score": "#9A9A9A", "ECG-FM": "#E69F00", "ECGFounder": "#56B4E9",

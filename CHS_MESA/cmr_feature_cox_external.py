@@ -20,6 +20,15 @@ Usage: python cmr_feature_cox_external.py
 import argparse, os, json, warnings
 import numpy as np, pandas as pd
 import matplotlib
+
+# --- repo path configuration (see docs/PATHS.md) ---
+import os as _os, sys as _sys
+_pd = _os.path.dirname(_os.path.abspath(__file__))
+while _pd != "/" and not _os.path.isdir(_os.path.join(_pd, "common")):
+    _pd = _os.path.dirname(_pd)
+_sys.path.insert(0, _os.path.join(_pd, "common"))
+from paths import P
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from scipy.stats import norm
@@ -28,10 +37,10 @@ from sklearn.impute import IterativeImputer
 from lifelines import CoxPHFitter
 warnings.filterwarnings("ignore")
 
-EV = "/gpfs/projects/trend/bojun/multimodal_rep/eval"
-IDD = "/gpfs/projects/trend/bojun/CHS_MESA/risk_score/csv_train_valid_test_individual_id_disease"
-CP = "/gpfs/projects/trend/bojun/CHS_MESA/risk_score/CHARGE-PREVENT"
-MD = "/gpfs/projects/trend/bojun/CHS_MESA/data_train_valid_test_individual_MESA"
+EV = P("EVAL_ROOT")
+IDD = P("RISK_ROOT", "csv_train_valid_test_individual_id_disease")
+CP = P("RISK_ROOT", "CHARGE-PREVENT")
+MD = P("MESA_ECG_ROOT")
 FEATS = ["lvef", "laef", "lvm", "lvedv", "lvesv", "lavmin", "lavmax"]
 CHS_RF = ["age", "chol", "hdl", "sbp", "bmiimp", "egfr", "dm", "cursmk", "lipid", "htnmed", "gender"]
 MESA_RF = ["agec", "sbpc", "bmic", "cepgfrc", "dm03c", "cigc", "htnmedc", "gender"]
@@ -188,7 +197,7 @@ def compute_pooled(extdir, m):
     print("MESA ...", flush=True)
     # MESA_disease.csv is keyed by idno_visit (== our prediction id) and carries the HF SUBTYPE
     # endpoints (pef = HFpEF, ref = HFrEF) that the split files lack -> reproduces Supp Fig 2 subtypes.
-    DIS = "/gpfs/projects/trend/bojun/CHS_MESA/MESA/MESA_disease.csv"
+    DIS = P("MESA_TABLES", "MESA_disease.csv")
     OUTC_COLS = ["ttoaf", "incaf", "prevaf", "ttohf", "inchf", "prevhf",
                  "ttopef", "incpef", "prevpef", "ttoref", "incref", "prevref"]
     msurv = pd.read_csv(DIS); msurv["id"] = msurv["idno_visit"].astype(str)
@@ -203,7 +212,7 @@ def compute_pooled(extdir, m):
 
     # advisor: MESA HAS measured cardiac MRI -> also run the Cox on the MRI-MEASURED CMR features
     # (MESA_CMR_features.csv, keyed by id_visit == our prediction id). Second series in Supp Fig 2.
-    meas = pd.read_csv("/gpfs/projects/trend/bojun/CHS_MESA/MESA/MESA_CMR_features.csv")
+    meas = pd.read_csv(P("MESA_TABLES", "MESA_CMR_features.csv"))
     meas["id"] = meas["id_visit"].astype(str)
     meas = meas.rename(columns={f: f"{f}_pred" for f in FEATS})[["id"] + [f"{f}_pred" for f in FEATS]]
     mp_meas = fit_all(lambda rfi: meas.merge(rfi, on="id").merge(msurv, on="id"), mout, MESA_RF, mimps, m)

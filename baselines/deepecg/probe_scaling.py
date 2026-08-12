@@ -14,7 +14,16 @@ import torch, numpy as np, pandas as pd, os
 from scipy.io import loadmat
 from sklearn.metrics import roc_auc_score
 
-UKB = "/gpfs/projects/trend/bojun/mri/outcome/data_train_valid_test_individual"
+# --- repo path configuration (see docs/PATHS.md) ---
+import os as _os, sys as _sys
+_pd = _os.path.dirname(_os.path.abspath(__file__))
+while _pd != "/" and not _os.path.isdir(_os.path.join(_pd, "common")):
+    _pd = _os.path.dirname(_pd)
+_sys.path.insert(0, _os.path.join(_pd, "common"))
+from paths import P
+
+
+UKB = P("UKB_ECG_ROOT")
 HERE = os.path.dirname(os.path.abspath(__file__))
 N = 2000
 

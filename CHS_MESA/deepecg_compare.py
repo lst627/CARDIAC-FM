@@ -22,7 +22,16 @@ import numpy as np, pandas as pd
 from scipy.stats import rankdata
 from sklearn.metrics import average_precision_score
 
-EV = "/gpfs/projects/trend/bojun/multimodal_rep/eval"
+# --- repo path configuration (see docs/PATHS.md) ---
+import os as _os, sys as _sys
+_pd = _os.path.dirname(_os.path.abspath(__file__))
+while _pd != "/" and not _os.path.isdir(_os.path.join(_pd, "common")):
+    _pd = _os.path.dirname(_pd)
+_sys.path.insert(0, _os.path.join(_pd, "common"))
+from paths import P
+
+
+EV = P("EVAL_ROOT")
 OUT = f"{EV}/deepecg"
 
 

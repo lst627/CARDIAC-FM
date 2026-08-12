@@ -9,8 +9,16 @@ likelihood) and metric (C-index) change. Labels = ECG_label_surv/{af,hf}/y.npy (
              --ecg_tsv_dir <man> --label_dir <ECG_label_surv/af> --save_dir <dir>
 """
 import os, sys, argparse
-os.environ.setdefault("ECGFOUNDER_REPO",
-                      "/gpfs/projects/trend/bojun/multimodal_rep/ECGFounder_DeepSSL/ECGFounder")
+
+# --- repo path configuration (see docs/PATHS.md) ---
+import os as _os, sys as _sys
+_pd = _os.path.dirname(_os.path.abspath(__file__))
+while _pd != "/" and not _os.path.isdir(_os.path.join(_pd, "common")):
+    _pd = _os.path.dirname(_pd)
+_sys.path.insert(0, _os.path.join(_pd, "common"))
+from paths import P
+
+os.environ.setdefault("ECGFOUNDER_REPO", P("ECGFOUNDER_REPO"))
 import numpy as np, pandas as pd, torch
 from lifelines.utils import concordance_index
 HERE = os.path.dirname(os.path.abspath(__file__))

@@ -17,9 +17,18 @@ import os
 import numpy as np, pandas as pd
 from scipy.io import loadmat
 
-UKB = "/gpfs/projects/trend/bojun/mri/outcome/data_train_valid_test_individual"
+# --- repo path configuration (see docs/PATHS.md) ---
+import os as _os, sys as _sys
+_pd = _os.path.dirname(_os.path.abspath(__file__))
+while _pd != "/" and not _os.path.isdir(_os.path.join(_pd, "common")):
+    _pd = _os.path.dirname(_pd)
+_sys.path.insert(0, _os.path.join(_pd, "common"))
+from paths import P
+
+
+UKB = P("UKB_ECG_ROOT")
 MAN = f"{UKB}/ECG_manifest_moretest"
-SURV = "/gpfs/projects/trend/bojun/CHS_MESA/risk_score/csv_HR/UKBB_CMR_AF-HF-IS_WithDem_Analytic.csv"
+SURV = P("RISK_ROOT", "csv_HR/UKBB_CMR_AF-HF-IS_WithDem_Analytic.csv")
 OUTROOT = f"{UKB}/ECG_label_surv"
 OUTCOMES = {"af": ("ttoaf", "afcens", "prevaf"), "hf": ("ttohf", "hfcens", "prevhf")}
 

@@ -5,14 +5,21 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=64G
 #SBATCH --time=03:00:00
-#SBATCH --output=/gpfs/projects/trend/bojun/multimodal_rep/eval/logs/deepecg_zs_%j.out
-#SBATCH --error=/gpfs/projects/trend/bojun/multimodal_rep/eval/logs/deepecg_zs_%j.err
+#SBATCH --output=logs/deepecg_zs_%j.out
+#SBATCH --error=logs/deepecg_zs_%j.err
 # Zero-shot DeepECG 5-year AF benchmark on UKB test / CHS / MESA (af5 only; these models are
 # AF-specific). Downloads the SSL checkpoint first (ungated), then runs both SL and SSL.
+
+# --- repo path configuration (see docs/PATHS.md) ---
+_repo="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+while [ "$_repo" != "/" ] && [ ! -d "$_repo/common" ]; do _repo="$(dirname "$_repo")"; done
+source "$_repo/env/paths.local.sh"
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 set -u
-ENV=/gpfs/projects/trend/bojun/mri_env
+ENV=${CONDA_ENV}
 export PATH="$ENV/bin:$PATH"; export LD_LIBRARY_PATH="$ENV/lib:${LD_LIBRARY_PATH:-}"
-cd /gpfs/projects/trend/bojun/multimodal_rep/ECGFounder_DeepSSL/deepecg
+cd "$HERE"
 
 if [ ! -s wcr_afib_5y.pt ]; then
   echo "downloading wcr_afib_5y.pt (DeepECG-SSL) ..."

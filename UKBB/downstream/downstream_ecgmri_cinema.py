@@ -15,12 +15,12 @@ Supports two modes:
 Usage:
     python downstream_ecgmri_cinema.py \
         --outcome af5 --mode ecg_mri --training_type partial \
-        --cl_ckpt  /gpfs/projects/trend/bojun/mri/CineMA/checkpoints/stage1_cinema/stage1_cinema_best.pth \
-        --ecg_ckpt /gpfs/projects/trend/bojun/multimodal/mimic_iv_ecg_physionet_pretrained.pt \
-        --mri_dir  /gpfs/projects/trend/data/UKBB/MRI/cropped_new \
-        --ecg_dir  /gpfs/projects/trend/bojun/mri/outcome/data_train_valid_test_individual/stage1/ecg_tsv \
+        --cl_ckpt  $CKPT_ROOT/stage1_cinema/stage1_cinema_best.pth \
+        --ecg_ckpt $ECG_CKPT \
+        --mri_dir  $UKB_MRI_DIR \
+        --ecg_dir  $UKB_ECG_ROOT/stage1/ecg_tsv \
         --csv_train .../MRI_train/af5.csv --csv_val .../MRI_valid_new/af5.csv --csv_test .../MRI_test_new/af5.csv \
-        --out_dir  /gpfs/projects/trend/bojun/mri/CineMA/checkpoints/downstream_ecg_mri
+        --out_dir  $CKPT_ROOT/downstream_ecg_mri
 """
 
 import os

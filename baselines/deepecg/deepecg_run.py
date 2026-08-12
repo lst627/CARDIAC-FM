@@ -36,10 +36,19 @@ import numpy as np, pandas as pd, torch
 from scipy.io import loadmat
 from sklearn.metrics import roc_auc_score
 
-EVAL = "/gpfs/projects/trend/bojun/multimodal_rep/eval"
-UKB = "/gpfs/projects/trend/bojun/mri/outcome/data_train_valid_test_individual"
-CHS = "/gpfs/projects/trend/bojun/CHS_MESA/data_train_valid_test_individual_CHS"
-MESA = "/gpfs/projects/trend/bojun/CHS_MESA/data_train_valid_test_individual_MESA"
+# --- repo path configuration (see docs/PATHS.md) ---
+import os as _os, sys as _sys
+_pd = _os.path.dirname(_os.path.abspath(__file__))
+while _pd != "/" and not _os.path.isdir(_os.path.join(_pd, "common")):
+    _pd = _os.path.dirname(_pd)
+_sys.path.insert(0, _os.path.join(_pd, "common"))
+from paths import P
+
+
+EVAL = P("EVAL_ROOT")
+UKB = P("UKB_ECG_ROOT")
+CHS = P("CHS_ECG_ROOT")
+MESA = P("MESA_ECG_ROOT")
 
 
 def prep(feats, norm):

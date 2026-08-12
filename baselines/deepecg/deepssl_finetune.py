@@ -21,9 +21,18 @@ from scipy.io import loadmat
 from sklearn.metrics import roc_auc_score
 from fairseq_signals.models import build_model_from_checkpoint
 
+# --- repo path configuration (see docs/PATHS.md) ---
+import os as _os, sys as _sys
+_pd = _os.path.dirname(_os.path.abspath(__file__))
+while _pd != "/" and not _os.path.isdir(_os.path.join(_pd, "common")):
+    _pd = _os.path.dirname(_pd)
+_sys.path.insert(0, _os.path.join(_pd, "common"))
+from paths import P
+
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 BACKBONE = f"{HERE}/SSL_pretrained.pt"
-UKB = "/gpfs/projects/trend/bojun/mri/outcome/data_train_valid_test_individual"
+UKB = P("UKB_ECG_ROOT")
 
 
 def seed_all(s):

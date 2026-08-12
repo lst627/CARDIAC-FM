@@ -22,11 +22,20 @@ import os, argparse, json
 import numpy as np, pandas as pd
 from scipy.stats import rankdata
 import matplotlib
+
+# --- repo path configuration (see docs/PATHS.md) ---
+import os as _os, sys as _sys
+_pd = _os.path.dirname(_os.path.abspath(__file__))
+while _pd != "/" and not _os.path.isdir(_os.path.join(_pd, "common")):
+    _pd = _os.path.dirname(_pd)
+_sys.path.insert(0, _os.path.join(_pd, "common"))
+from paths import P
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 
-EV = "/gpfs/projects/trend/bojun/multimodal_rep/eval"
+EV = P("EVAL_ROOT")
 FRACS = [("train_valid_5_5", "10%"), ("train_valid_10_10", "20%")]
 
 # our model first, then the four baselines: (fewshot subdir tag, family label, colour, sig symbol)

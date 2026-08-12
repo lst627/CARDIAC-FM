@@ -13,12 +13,21 @@ Usage: python a3_subgroups.py [--B 1000]
 import argparse, os, warnings
 import numpy as np, pandas as pd
 from scipy.stats import rankdata
+
+# --- repo path configuration (see docs/PATHS.md) ---
+import os as _os, sys as _sys
+_pd = _os.path.dirname(_os.path.abspath(__file__))
+while _pd != "/" and not _os.path.isdir(_os.path.join(_pd, "common")):
+    _pd = _os.path.dirname(_pd)
+_sys.path.insert(0, _os.path.join(_pd, "common"))
+from paths import P
+
 warnings.filterwarnings("ignore")
 
-EV = "/gpfs/projects/trend/bojun/multimodal_rep/eval"
+EV = P("EVAL_ROOT")
 OR = EV  # our-model root; --ours_root overrides (e.g. .../eval_3 for seed 3). Baselines stay under EV.
-CP = "/gpfs/projects/trend/bojun/CHS_MESA/risk_score/CHARGE-PREVENT"
-RS = "/gpfs/projects/trend/bojun/CHS_MESA/risk_score/computed"
+CP = P("RISK_ROOT", "CHARGE-PREVENT")
+RS = P("RISK_ROOT", "computed")
 DEMO = {"UKBB": ("eid_visit", "agecmr", "sex"), "CHS": ("seqid", "age", "gend01"),
         "MESA": ("idno_visit", "agec", "gender")}
 AGE_CUT = {"UKBB": 65, "CHS": 75, "MESA": 65}       # see docstring

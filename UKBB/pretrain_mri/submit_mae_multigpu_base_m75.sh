@@ -6,8 +6,15 @@
 #SBATCH --cpus-per-task=32
 #SBATCH --mem=400G
 #SBATCH --time=24:00:00
-#SBATCH --output=/gpfs/projects/trend/bojun/mri/CineMA/logs/cinema_base_m75_%j.out
-#SBATCH --error=/gpfs/projects/trend/bojun/mri/CineMA/logs/cinema_base_m75_%j.err
+#SBATCH --output=logs/cinema_base_m75_%j.out
+#SBATCH --error=logs/cinema_base_m75_%j.err
+
+# --- repo path configuration (see docs/PATHS.md) ---
+_repo="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+while [ "$_repo" != "/" ] && [ ! -d "$_repo/common" ]; do _repo="$(dirname "$_repo")"; done
+source "$_repo/env/paths.local.sh"
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 
 # ViT-BASE CineMA pretrain, MASK RATIO 0.75 (vs the 0.9 default) — CineMA's ratio.
 # Only change vs cinema_base_conv_224_mg is --mask_ratio, so it isolates the mask-rate
@@ -16,20 +23,20 @@
 # to 8 and --accum_steps to 4 (keeps effective batch 128). Trains to its own ckpt dir.
 
 module load conda
-conda activate /gpfs/projects/trend/bojun/mri_env
+conda activate ${CONDA_ENV}
 
 NGPUS=4
 VIEW_ENCODER=conv
 
-DATA=/gpfs/projects/trend/data/UKBB/MRI/cropped_new
-CKPT=/gpfs/projects/trend/bojun/mri/CineMA/checkpoints/cinema_base_conv_224_m75_mg
-LOGS=/gpfs/projects/trend/bojun/mri/CineMA/logs
-TR=/gpfs/projects/trend/bojun/mri/splits/train
-VA=/gpfs/projects/trend/bojun/mri/splits/val
+DATA=${UKB_MRI_DIR}
+CKPT=${CKPT_ROOT}/cinema_base_conv_224_m75_mg
+LOGS=${LOG_DIR}
+TR=${MRI_SPLITS}/train
+VA=${MRI_SPLITS}/val
 
 mkdir -p $CKPT $LOGS
 
-cd /gpfs/projects/trend/bojun/mri/CineMA/pretrain
+cd "$HERE"
 
 export MASTER_ADDR=$(hostname)
 export MASTER_PORT=$((20000 + RANDOM % 20000))

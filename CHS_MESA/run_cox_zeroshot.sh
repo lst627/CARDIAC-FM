@@ -6,15 +6,21 @@
 #SBATCH --mem=64G
 #SBATCH --time=01:30:00
 #SBATCH --array=0-19
-#SBATCH --output=/gpfs/projects/trend/bojun/multimodal_rep/eval/logs/cox_zs_%A_%a.out
-#SBATCH --error=/gpfs/projects/trend/bojun/multimodal_rep/eval/logs/cox_zs_%A_%a.err
+#SBATCH --output=logs/cox_zs_%A_%a.out
+#SBATCH --error=logs/cox_zs_%A_%a.err
 # Zero-shot survival: UKB Cox-fine-tuned models applied to CHS/MESA (no refit) -> C-index.
 # Array over (model x cohort x outcome): idx = model*4 + cohort*2 + outcome.
-source /gpfs/projects/trend/bojun/CHS_MESA/scripts/config.sh
+
+# --- repo path configuration (see docs/PATHS.md) ---
+_repo="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+while [ "$_repo" != "/" ] && [ ! -d "$_repo/common" ]; do _repo="$(dirname "$_repo")"; done
+source "$_repo/env/paths.local.sh"
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 export W=8
-COX=/gpfs/projects/trend/bojun/multimodal_rep/eval/cox
-ZS=/gpfs/projects/trend/bojun/multimodal_rep/eval/cox_zeroshot
-DE=/gpfs/projects/trend/bojun/multimodal_rep/ECGFounder_DeepSSL
+COX=${EVAL_ROOT}/cox
+ZS=${EVAL_ROOT}/cox_zeroshot
+DE="$_repo/baselines"
 MODELS=(m75_seed1 ecgfm deepsl_ft deepssl_ft ecgfounder); COHORTS=(CHS MESA); OUTS=(af hf)
 i=$SLURM_ARRAY_TASK_ID
 M=$((i/4)); rem=$((i%4)); C=$((rem/2)); O=$((rem%2))
@@ -33,7 +39,7 @@ case $model in
        --ckpt_in "$COX/deepsl_ft/$outc/best.pth" --ecg_tsv_dir "$MAN" --label_dir "$LAB" --save_dir "$SAVE");;
   deepssl_ft) (cd "$DE/deepecg" && python cox_deepecg.py test --model deepssl --outcome $outc --split test \
        --ckpt_in "$COX/deepssl_ft/$outc/best.pth" --ecg_tsv_dir "$MAN" --label_dir "$LAB" --save_dir "$SAVE");;
-  ecgfounder) (cd "$DE" && python cox_ecgfounder.py test --outcome $outc --split test \
+  ecgfounder) (cd "$DE/ecgfounder" && python cox_ecgfounder.py test --outcome $outc --split test \
        --ckpt_in "$COX/ecgfounder/$outc/best.pth" --ecg_tsv_dir "$MAN" --label_dir "$LAB" --save_dir "$SAVE");;
 esac
 echo "done $model $cohd $outc"

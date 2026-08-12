@@ -22,6 +22,15 @@ Usage: python fig4_compare.py [--B 1000] [--ours_root .../eval_3] [--figdir .../
 import argparse, os, json, warnings
 import numpy as np, pandas as pd
 import matplotlib
+
+# --- repo path configuration (see docs/PATHS.md) ---
+import os as _os, sys as _sys
+_pd = _os.path.dirname(_os.path.abspath(__file__))
+while _pd != "/" and not _os.path.isdir(_os.path.join(_pd, "common")):
+    _pd = _os.path.dirname(_pd)
+_sys.path.insert(0, _os.path.join(_pd, "common"))
+from paths import P
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from lifelines import CoxPHFitter
@@ -33,11 +42,11 @@ warnings.filterwarnings("ignore")
 # baseline covariates for the ADJUSTED tertile Cox (advisor: adjust for covariates, not univariable).
 CHS_RF = ["age", "chol", "hdl", "sbp", "bmiimp", "egfr", "dm", "cursmk", "lipid", "htnmed", "gender"]
 MESA_RF = ["agec", "sbpc", "bmic", "cepgfrc", "dm03c", "cigc", "htnmedc", "gender"]
-CP = "/gpfs/projects/trend/bojun/CHS_MESA/risk_score/CHARGE-PREVENT"
+CP = P("RISK_ROOT", "CHARGE-PREVENT")
 
-IDD = "/gpfs/projects/trend/bojun/CHS_MESA/risk_score/csv_train_valid_test_individual_id_disease"
-RS = "/gpfs/projects/trend/bojun/CHS_MESA/risk_score/computed"
-EV = "/gpfs/projects/trend/bojun/multimodal_rep/eval"
+IDD = P("RISK_ROOT", "csv_train_valid_test_individual_id_disease")
+RS = P("RISK_ROOT", "computed")
+EV = P("EVAL_ROOT")
 
 
 def tert(x):
@@ -192,7 +201,7 @@ def compute_mesa(ourroot, B, rng):
     """MESA survival from MESA_disease.csv, keyed idno_visit (== our prediction id), carrying the HF
     SUBTYPE endpoints (pef=HFpEF, ref=HFrEF). Each idno_visit is its own time origin."""
     rows, comps = [], []
-    DIS = "/gpfs/projects/trend/bojun/CHS_MESA/MESA/MESA_disease.csv"
+    DIS = P("MESA_TABLES", "MESA_disease.csv")
     surv = pd.read_csv(DIS); surv["id"] = surv["idno_visit"].astype(str)
     rs = pd.read_csv(f"{RS}/MESA_riskscore.csv"); rs["id"] = rs["id"].astype(str)
     mrf = pd.read_csv(f"{CP}/charge_prevent_MESA.csv"); mrf["id"] = mrf["idno_visit"].astype(str)

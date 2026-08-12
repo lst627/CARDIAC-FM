@@ -5,10 +5,17 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=32G
 #SBATCH --time=01:00:00
-#SBATCH --output=/gpfs/projects/trend/bojun/multimodal_rep/eval/logs/deepecg_probe_%j.out
-#SBATCH --error=/gpfs/projects/trend/bojun/multimodal_rep/eval/logs/deepecg_probe_%j.err
-ENV=/gpfs/projects/trend/bojun/mri_env
+#SBATCH --output=logs/deepecg_probe_%j.out
+#SBATCH --error=logs/deepecg_probe_%j.err
+
+# --- repo path configuration (see docs/PATHS.md) ---
+_repo="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+while [ "$_repo" != "/" ] && [ ! -d "$_repo/common" ]; do _repo="$(dirname "$_repo")"; done
+source "$_repo/env/paths.local.sh"
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+ENV=${CONDA_ENV}
 export PATH="$ENV/bin:$PATH"; export LD_LIBRARY_PATH="$ENV/lib:${LD_LIBRARY_PATH:-}"
-cd /gpfs/projects/trend/bojun/multimodal_rep/ECGFounder_DeepSSL/deepecg
+cd "$HERE"
 python probe_scaling.py
 echo DONE

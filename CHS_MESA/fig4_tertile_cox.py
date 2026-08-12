@@ -20,9 +20,18 @@ import argparse, os
 import numpy as np, pandas as pd
 from lifelines import CoxPHFitter
 
-RS = "/gpfs/projects/trend/bojun/CHS_MESA/risk_score/computed"
-IDD = "/gpfs/projects/trend/bojun/CHS_MESA/risk_score/csv_train_valid_test_individual_id_disease"
-MESA = "/gpfs/projects/trend/bojun/CHS_MESA/data_train_valid_test_individual_MESA/test.csv"
+# --- repo path configuration (see docs/PATHS.md) ---
+import os as _os, sys as _sys
+_pd = _os.path.dirname(_os.path.abspath(__file__))
+while _pd != "/" and not _os.path.isdir(_os.path.join(_pd, "common")):
+    _pd = _os.path.dirname(_pd)
+_sys.path.insert(0, _os.path.join(_pd, "common"))
+from paths import P
+
+
+RS = P("RISK_ROOT", "computed")
+IDD = P("RISK_ROOT", "csv_train_valid_test_individual_id_disease")
+MESA = P("MESA_ECG_ROOT", "test.csv")
 DAYS_5YR = 1826.25
 RISK_COL = {"af": "charge_mean", "hf": "prevent_mean",
             "hfpef": "prevent_mean", "hfref": "prevent_mean"}

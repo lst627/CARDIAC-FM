@@ -8,16 +8,25 @@ Purely descriptive - it visualises the separation that the tertile HRs quantify.
 import os, warnings
 import numpy as np, pandas as pd
 import matplotlib
+
+# --- repo path configuration (see docs/PATHS.md) ---
+import os as _os, sys as _sys
+_pd = _os.path.dirname(_os.path.abspath(__file__))
+while _pd != "/" and not _os.path.isdir(_os.path.join(_pd, "common")):
+    _pd = _os.path.dirname(_pd)
+_sys.path.insert(0, _os.path.join(_pd, "common"))
+from paths import P
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from lifelines import KaplanMeierFitter
 warnings.filterwarnings("ignore")
 
-EV = "/gpfs/projects/trend/bojun/multimodal_rep/eval"
+EV = P("EVAL_ROOT")
 OR = EV  # our-model root; --ours_root overrides (e.g. .../eval_3 for seed 3). Risk Score/survival stay under EV.
-HRD = "/gpfs/projects/trend/bojun/CHS_MESA/risk_score/csv_HR"
-IDD = "/gpfs/projects/trend/bojun/CHS_MESA/risk_score/csv_train_valid_test_individual_id_disease"
-RS = "/gpfs/projects/trend/bojun/CHS_MESA/risk_score/computed"
+HRD = P("RISK_ROOT", "csv_HR")
+IDD = P("RISK_ROOT", "csv_train_valid_test_individual_id_disease")
+RS = P("RISK_ROOT", "computed")
 OUTD = f"{EV}/a5"
 COLORS = {"low": "#2c7fb8", "intermediate": "#f0a30a", "high": "#d7191c"}
 

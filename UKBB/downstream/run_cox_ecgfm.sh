@@ -6,14 +6,20 @@
 #SBATCH --mem=96G
 #SBATCH --time=08:00:00
 #SBATCH --array=0-1
-#SBATCH --output=/gpfs/projects/trend/bojun/multimodal_rep/eval/logs/cox_ecgfm_%A_%a.out
-#SBATCH --error=/gpfs/projects/trend/bojun/multimodal_rep/eval/logs/cox_ecgfm_%A_%a.err
+#SBATCH --output=logs/cox_ecgfm_%A_%a.out
+#SBATCH --error=logs/cox_ecgfm_%A_%a.err
 # DeepSurv (Cox) fine-tune on the ECG-FM baseline (no multimodal pretraining), same protocol as our
 # CARDIAC-FM Cox run. Train on UKB survival, then test-set C-index. Array over outcome.
-source /gpfs/projects/trend/bojun/CHS_MESA/scripts/config.sh
-UKB=/gpfs/projects/trend/bojun/mri/outcome/data_train_valid_test_individual
+
+# --- repo path configuration (see docs/PATHS.md) ---
+_repo="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+while [ "$_repo" != "/" ] && [ ! -d "$_repo/common" ]; do _repo="$(dirname "$_repo")"; done
+source "$_repo/env/paths.local.sh"
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+UKB=${UKB_ECG_ROOT}
 OUTS=(af hf); O=${OUTS[$SLURM_ARRAY_TASK_ID]}
-D=/gpfs/projects/trend/bojun/multimodal_rep/eval/cox/ecgfm/$O
+D=${EVAL_ROOT}/cox/ecgfm/$O
 cd "$SCRIPTS"
 
 echo "===== [ECG-FM] Cox TRAIN outcome=$O ====="

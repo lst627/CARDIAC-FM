@@ -10,11 +10,20 @@ import argparse, os, json
 import numpy as np, pandas as pd
 from lifelines.utils import concordance_index
 import matplotlib
+
+# --- repo path configuration (see docs/PATHS.md) ---
+import os as _os, sys as _sys
+_pd = _os.path.dirname(_os.path.abspath(__file__))
+while _pd != "/" and not _os.path.isdir(_os.path.join(_pd, "common")):
+    _pd = _os.path.dirname(_pd)
+_sys.path.insert(0, _os.path.join(_pd, "common"))
+from paths import P
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 
-COX = "/gpfs/projects/trend/bojun/multimodal_rep/eval/cox"
+COX = P("EVAL_ROOT", "cox")
 # CARDIAC-FM first (the reference); then the fine-tuned baselines, matched Okabe-Ito colours.
 MODELS = [("CARDIAC-FM (ECG)", "m75_seed1", "#009E73"),
           ("ECG-FM", "ecgfm", "#E69F00"),
@@ -141,7 +150,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--B", type=int, default=1000)
     ap.add_argument("--seed", type=int, default=42)
-    ap.add_argument("--outdir", default="/gpfs/projects/trend/bojun/multimodal_rep/eval/figures")
+    ap.add_argument("--outdir", default=P("EVAL_ROOT", "figures"))
     ap.add_argument("--stats", default=None, help="cached bootstrap JSON (default <outdir>/cox_cindex_stats.json)")
     ap.add_argument("--recompute", action="store_true", help="force re-run the bootstrap even if cache exists")
     a = ap.parse_args()

@@ -8,10 +8,19 @@ import numpy as np, pandas as pd
 from scipy.stats import rankdata
 from sklearn.metrics import average_precision_score
 
-EV = "/gpfs/projects/trend/bojun/multimodal_rep/eval"
-RES = "/gpfs/projects/trend/bojun/CHS_MESA/results"
+# --- repo path configuration (see docs/PATHS.md) ---
+import os as _os, sys as _sys
+_pd = _os.path.dirname(_os.path.abspath(__file__))
+while _pd != "/" and not _os.path.isdir(_os.path.join(_pd, "common")):
+    _pd = _os.path.dirname(_pd)
+_sys.path.insert(0, _os.path.join(_pd, "common"))
+from paths import P
+
+
+EV = P("EVAL_ROOT")
+RES = P("EXT_RESULTS")
 # paper ECG-FM (provided ECGFM_ft checkpoints) zero-shot, seed 1 — matched seed-1 vs seed-1 comparison
-EFROOT = "/gpfs/projects/trend/bojun/multimodal_rep/eval/ecgfm_zeroshot_provided"
+EFROOT = P("EVAL_ROOT", "ecgfm_zeroshot_provided")
 
 
 def fauc(y, s):  # fast rank-based AUROC (ties handled by rankdata)

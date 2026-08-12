@@ -136,7 +136,7 @@ celerybeat.pid
 
 # Environments
 # NOTE: the stock Python template ignores `env/`, but this repository has a tracked
-# `env/` directory (SETUP.md, requirements-lock.txt, config.example.sh). Ignoring it
+# `env/` directory (SETUP.md, requirements-lock.txt, paths.example.sh). Ignoring it
 # would silently drop those files, so that rule is deliberately omitted.
 .env
 .envrc
@@ -216,8 +216,9 @@ weights/*.pt
 weights/*.pth
 *.ckpt
 
-# Local cluster config (copy from env/config.example.sh)
-env/config.sh
+# Local machine path configuration (copy from env/paths.example.sh).
+# Holds absolute paths for THIS machine and must never be committed.
+env/paths.local.sh
 
 # Data — never commit cohort data
 *.npy

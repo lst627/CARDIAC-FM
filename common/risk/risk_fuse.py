@@ -14,8 +14,17 @@ import numpy as np, pandas as pd
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score, average_precision_score
 
-EVAL = "/gpfs/projects/trend/bojun/multimodal_rep/eval"   # overridden by --eval_root
-RS = "/gpfs/projects/trend/bojun/CHS_MESA/risk_score/computed"
+# --- repo path configuration (see docs/PATHS.md) ---
+import os as _os, sys as _sys
+_pd = _os.path.dirname(_os.path.abspath(__file__))
+while _pd != "/" and not _os.path.isdir(_os.path.join(_pd, "common")):
+    _pd = _os.path.dirname(_pd)
+_sys.path.insert(0, _os.path.join(_pd, "common"))
+from paths import P
+
+
+EVAL = P("EVAL_ROOT")  # overridden by --eval_root
+RS = P("RISK_ROOT", "computed")
 RISK_COL = {"af5": "charge_mean", "hf5": "prevent_mean"}
 
 
@@ -54,7 +63,7 @@ def apply_glm(clf, p, r, sd, tag, outc, label):
           f"(model-only {roc_auc_score(e.y_true, e.y_pred):.4f})  -> {sd}/result.csv")
 
 
-EFPAIR = "/gpfs/projects/trend/bojun/multimodal_rep/eval/ecgfm_ukb_paired/seed1"
+EFPAIR = P("EVAL_ROOT", "ecgfm_ukb_paired/seed1")
 
 
 def _cl_ids(kind, outc):

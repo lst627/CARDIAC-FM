@@ -9,12 +9,12 @@ ECG/MRI dataset, the training loop) is unchanged.
 
 Usage:
     python stage1_CL_cinema.py --lr 1e-5 \
-        --mri_dir /gpfs/projects/trend/data/UKBB/MRI/cropped_new \
-        --ecg_dir /gpfs/projects/trend/bojun/mri/outcome/data_train_valid_test_individual/stage1/ecg_tsv \
+        --mri_dir $UKB_MRI_DIR \
+        --ecg_dir $UKB_ECG_ROOT/stage1/ecg_tsv \
         --csv_train .../mri_train.csv --csv_val .../mri_valid.csv \
-        --mae_ckpt /gpfs/projects/trend/bojun/mri/CineMA/checkpoints/cinema_224_100ep_mg/cinema_best.pth \
-        --ecg_ckpt /gpfs/projects/trend/bojun/multimodal/mimic_iv_ecg_physionet_pretrained.pt \
-        --out_dir  /gpfs/projects/trend/bojun/mri/CineMA/checkpoints/stage1_cinema
+        --mae_ckpt $CKPT_ROOT/cinema_224_100ep_mg/cinema_best.pth \
+        --ecg_ckpt $ECG_CKPT \
+        --out_dir  $CKPT_ROOT/stage1_cinema
 """
 
 import os

@@ -12,8 +12,17 @@ from scipy.io import loadmat
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score
 
+# --- repo path configuration (see docs/PATHS.md) ---
+import os as _os, sys as _sys
+_pd = _os.path.dirname(_os.path.abspath(__file__))
+while _pd != "/" and not _os.path.isdir(_os.path.join(_pd, "common")):
+    _pd = _os.path.dirname(_pd)
+_sys.path.insert(0, _os.path.join(_pd, "common"))
+from paths import P
+
+
 HERE = os.path.dirname(os.path.abspath(__file__))
-UKB = "/gpfs/projects/trend/bojun/mri/outcome/data_train_valid_test_individual"
+UKB = P("UKB_ECG_ROOT")
 CKPT = f"{HERE}/SSL_pretrained.pt"
 dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
