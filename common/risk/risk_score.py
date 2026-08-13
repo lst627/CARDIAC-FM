@@ -47,10 +47,20 @@ CATEG = ["race"]
 
 
 def charge_af(d):  # CHARGE-AF; d has canonical columns
+    # s = linear predictor (Alonso et al., J Am Heart Assoc 2013, Table 4 coefficients).
     s = (d.age/5*0.508 + (d.race == 1)*0.465 + d.height/10*0.248 + d.weight/15*0.115
          + d.sbp/20*0.197 + d.dbp/10*(-0.101) + (d.cursmoke == 1)*0.359 + (d.htnmed == 1)*0.349
          + (d.prevdm == 1)*0.237 + (d.prevhf == 1)*0.701 + (d.prevmi == 1)*0.496)
-    return 1 - 0.9718412736**(s - 12.5815600)
+    # 5-year risk = 1 - S0^exp(s - mean), S0 = 0.9718412736, mean = 12.5815600.
+    # The exp() is NOT optional: without it the exponent goes negative whenever s < 12.5816
+    # (37.9% of MESA, and a similar share of CHS/UKB), and since S0 < 1 that makes S0^(negative)
+    # > 1, i.e. a NEGATIVE "probability" -- observed down to -10.6%. The earlier R pipeline
+    # (risk_score/analysis/CHARGE-AF*.Rmd) and the old model.py both omitted it, and this port
+    # inherited the omission. It is invisible to AUROC/AUPRC/HR/C-index -- both forms are
+    # monotone increasing in s, so every rank-based metric is bit-identical -- but it makes any
+    # ABSOLUTE risk wrong, which is what calibration, IDI/NRI and decision-curve analysis read.
+    # (Bug found 2026-08-12.)
+    return 1 - 0.9718412736**np.exp(s - 12.5815600)
 
 
 def prevent_hf(d):  # AHA PREVENT-HF (sex-specific), verbatim from model.py / PREVENT-HF.Rmd
