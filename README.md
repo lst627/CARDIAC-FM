@@ -110,7 +110,18 @@ python infer.py \
   --out      predictions.csv
 ```
 
-`predictions.csv` is `id,risk_score`. Read [`docs/DATA_FORMAT.md`](docs/DATA_FORMAT.md) first — it
+`predictions.csv` is `id,risk_score`.
+
+With cardiac MRI **and segmentations**, add the imaging arm:
+
+```bash
+python tools/prepare_mri.py --raw_dir raw_mri/ --out_dir prepared_mri/ --workers 8
+python infer.py --mode ecg_mri --mri_dir prepared_mri/ \
+  --ecg_dir prepared/ECG_manifest --split test \
+  --ckpt af5_ecg_mri.pth --ecg_ckpt ecgfm_mimic_iv_physionet.pt --out predictions.csv
+```
+
+Read [`docs/DATA_FORMAT.md`](docs/DATA_FORMAT.md) first — it
 specifies the format, lists the preprocessing assumptions you must meet (lead order, amplitude
 scale, baseline correction), and gives measured runtimes.
 

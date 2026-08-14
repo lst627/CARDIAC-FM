@@ -1,7 +1,7 @@
 # Data format
 
-What CARDIAC-FM reads, how to produce it, and — for MRI — why this repository cannot produce it for
-you.
+What CARDIAC-FM reads and how to produce it. `tools/prepare_ecg.py` and `tools/prepare_mri.py`
+cover both modalities; the MRI path additionally requires segmentations, which you must supply.
 
 ## ECG
 
@@ -108,48 +108,59 @@ ViT-base over 3 views × 8 frames at 224², so treat a GPU as required there.
 `(slices, frames, height, width)` — one slice for each long-axis view, three short-axis slices.
 Inference center-crops the temporal axis to 8 frames.
 
-### Producing it — read this before planning MRI work
+### Producing it
 
-**This repository does not ship the MRI preprocessing pipeline, and the missing piece is not a
-convenience script.** The authors' pipeline (`preprocess_batch.py`, not part of this release) runs:
+`tools/prepare_mri.py` runs the exact preprocessing the published checkpoints were trained with:
 
-1. select short-axis slices: middle ± 2 → 3 slices
-2. resample to 0.994 mm × 0.994 mm
-3. **compute a bounding box from a segmentation mask** — union across selected slices and all
-   timepoints, plus a 10% margin
-4. crop → pad to square → resize to 224 × 224
-5. temporal stride 2: 50 frames → 25
-6. intensity: clip to [0.1%, 99.9%] → rescale to [1, 255] → z-score
+```bash
+python tools/prepare_mri.py --raw_dir raw/ --out_dir prepared_mri/ --workers 8
+```
 
-Step 3 is the blocker. It consumes per-view segmentation masks:
+Expected input, one directory per subject:
 
-| view | file | labels used |
-|---|---|---|
-| 2-chamber | `seg_la_2ch.nii.gz` | `[1]` — left atrium |
-| 4-chamber | `seg_la_4ch.nii.gz` | `[1, 2]` — LA + LV |
-| short-axis | `seg_sa.nii.gz` | `[1, 2, 3]` — LV cavity, myocardium, RV |
+```
+raw/<subject_id>/
+  la_2ch.nii.gz    seg_la_2ch.nii.gz
+  la_4ch.nii.gz    seg_la_4ch.nii.gz
+  sa.nii.gz        seg_sa.nii.gz
+```
 
-UK Biobank distributes these segmentations with its imaging data. **If you bring your own cardiac
-MRI, you do not have them**, and you must generate them yourself.
+The pipeline: select short-axis slices (middle ± 2) → resample to 0.994 mm → bounding box from the
+segmentation (union over selected slices and all frames, +10% margin) → crop, pad to square, resize
+to 224 → temporal stride 2 (50 frames → 25) → clip to [0.1%, 99.9%], rescale to [1, 255], z-score.
 
-### Why that is hard
+It finishes with a self-check that compares the output shapes and per-volume statistics against the
+training data. Requires `nibabel` and `scikit-image`.
 
-- The obvious candidate, the Bai et al. (2018) `ukbb_cardiac` FCN, ships weights for **short-axis
-  and 4-chamber only — there is no 2-chamber model**. The 2-chamber view is required, so this route
-  is incomplete on its own.
-- That model is TensorFlow-based, and its released mask format differs from the NIfTI layout the
-  crop step expects, so an adapter is needed even for the two views it does cover.
-- Segmentation quality directly sets the crop, which sets the field of view the encoder sees. A
-  systematically different crop is a silent distribution shift — the model still returns a
-  plausible number.
+### You must supply segmentations
+
+**The crop is derived from the segmentation, so it is not optional.** Expected labels:
+
+| file | labels |
+|---|---|
+| `seg_la_2ch.nii.gz` | `1` = left atrium |
+| `seg_la_4ch.nii.gz` | `1` = left atrium, `2` = left ventricle |
+| `seg_sa.nii.gz` | `1` = LV cavity, `2` = myocardium, `3` = RV |
+
+Different label numbers? Remap, or pass `--labels_2ch` / `--labels_4ch` / `--labels_sa`.
+
+If a label set matches nothing, the code falls back to a centred crop. **The output still has the
+right shape and still passes the statistics self-check** — z-scoring a wrongly-cropped volume looks
+exactly like z-scoring a correct one. The only signal is the run's own warning, which counts how
+many views fell back. Do not ignore it.
+
+UK Biobank distributes segmentations with its imaging data. If you bring your own MRI, you must
+generate them. The obvious candidate — the Bai et al. (2018) `ukbb_cardiac` FCN — ships weights for
+short-axis and 4-chamber only; there is **no 2-chamber model**, and the 2-chamber view is required,
+so that route is incomplete on its own.
 
 ### Practical advice
 
-**Use the ECG-only path.** It needs no segmentation, no registration, and no imaging pipeline, and
-the published checkpoints reach test AUROC 0.770 for atrial fibrillation on ECG alone. The ECG+MRI
-checkpoint reaches 0.820 — real, but bought with an imaging pipeline this repository cannot give
-you.
+If you already have segmentations, the multimodal path is straightforward: run
+`tools/prepare_mri.py`, then `infer.py --mode ecg_mri`. The published ECG+MRI checkpoint reaches
+test AUROC 0.820 for atrial fibrillation, against 0.770 for ECG alone.
 
-If you do need the multimodal path, budget for building and validating cardiac segmentation for all
-three views as a project in its own right, and verify your `vst_*.npy` statistics against the
-expected ranges above before drawing conclusions.
+If you do **not** have segmentations, use the ECG-only path. Producing cardiac segmentation for all
+three views — including the 2-chamber view, which has no released model — is a project in its own
+right, and a systematically different crop is a silent distribution shift: the model still returns a
+plausible-looking number.
