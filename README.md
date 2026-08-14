@@ -93,6 +93,27 @@ Verify:
 python -c "import torch, lifelines, sklearn, pandas, fairseq_signals; print('ok')"
 ```
 
+## Quick start: score your own ECGs
+
+If you just want risk scores for your own 12-lead ECGs, you do not need MRI, labels, or any
+training:
+
+```bash
+# 1. convert your recordings (WFDB / CSV / NumPy) to the expected layout
+python tools/prepare_ecg.py --in_dir raw/ --format wfdb --out_root prepared/ --split test
+
+# 2. score them
+python infer.py \
+  --ecg_dir  prepared/ECG_manifest --split test \
+  --ckpt     af5_ecg.pth \
+  --ecg_ckpt ecgfm_mimic_iv_physionet.pt \
+  --out      predictions.csv
+```
+
+`predictions.csv` is `id,risk_score`. Read [`docs/DATA_FORMAT.md`](docs/DATA_FORMAT.md) first — it
+specifies the format, lists the preprocessing assumptions you must meet (lead order, amplitude
+scale, baseline correction), and gives measured runtimes.
+
 ## Checkpoints
 
 Three checkpoints are involved; none are committed to this repository. See
@@ -102,9 +123,12 @@ Three checkpoints are involved; none are committed to this repository. See
 |---|---|---|
 | `ecgfm_mimic_iv_physionet.pt` | ECG-FM backbone (upstream release) | everything ECG-side |
 | `cinema_mae_m75.pth` | self-supervised MRI encoder (CineMA MAE, mask 0.75) | re-running stage-1 alignment |
-| `stage1_cinema_m75.pth` | **the headline aligned model** | all downstream / evaluation |
+| `stage1_cinema_m75.pth` | **the headline aligned model** | fine-tuning your own downstream task |
+| `downstream_m75/af5_ecg.pth`, `hf5_ecg.pth` | fine-tuned AF / HF classifiers, ECG only | `infer.py --mode ecg` |
+| `downstream_m75/af5_ecg_mri.pth`, `hf5_ecg_mri.pth` | fine-tuned AF / HF classifiers, ECG+MRI | `infer.py --mode ecg_mri` |
 
-Minimum to run downstream evaluation: `ecgfm_mimic_iv_physionet.pt` + `stage1_cinema_m75.pth`.
+Minimum to score your own ECGs: `ecgfm_mimic_iv_physionet.pt` + one `downstream_m75/*_ecg.pth`.
+Minimum to fine-tune your own task: `ecgfm_mimic_iv_physionet.pt` + `stage1_cinema_m75.pth`.
 
 ## Pipeline
 
