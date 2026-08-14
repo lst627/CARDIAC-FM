@@ -52,11 +52,10 @@ UKBB/
   pretrain_mri/      CineMA MAE self-supervised pretraining
   contrastive/       stage-1 ECG<->MRI alignment -> the m75 checkpoint
   downstream/        fine-tune the aligned encoder on UKB (ECG-only and ECG+MRI)
-  figures/           Fig 2 (UKB), Fig 3 (external), CMR accuracy, UKB tertile Cox / KM
+  figures/           Fig 2 (UKB), Fig 3 (external), survival comparison, UKB tertile Cox
 CHS_MESA/          external validation: zero-/few-shot, risk stratification, survival, CMR,
                    refit-clinical, calibration/IDI/DCA, subgroups
 baselines/         ECGFounder, DeepECG-SL/SSL comparison models
-figure_numbers/    cached machine-readable numbers behind every figure (re-plot without recompute)
 env/               environment setup + pinned lock file
 weights/           how to obtain checkpoints (no large binaries committed)
 docs/              supplementary documentation (see docs/PATHS.md)
@@ -201,14 +200,17 @@ cohort. Scripts live in `CHS_MESA/`:
 | CMR features (predicted + MESA measured) | `cmr_feature_cox_external.py`, `cmr_feature_cox.py`, `mesa_cmr_corr.py` |
 | refit-clinical incremental value | `refit_clinical_compare.py` |
 | calibration / IDI-NRI / decision curves | `clinical_utility.py` |
-| subgroups | `a3_subgroups.py`, `fig_subgroups.py` |
+| subgroups | `a3_subgroups.py` |
 | baseline comparisons | `deepecg_compare.py`, `ensemble_compare.py` |
 
 ### 5. Figures
 
-Figure scripts use a **compute -> cache -> render** split. The cached compute for every figure is
-committed in [`figure_numbers/`](figure_numbers/README.md), so figures can be re-plotted in seconds
-without re-running bootstraps or MICE:
+Figure scripts use a **compute -> cache -> render** split: the statistics are computed once and
+cached to JSON, and rendering reads that cache, so re-formatting a figure does not re-run the
+bootstrap or MICE. The caches are not committed — the first run of each script produces them.
+
+> **These scripts are not final.** They are provided to document how the reported numbers are
+> derived; the figure code used for the final manuscript is not yet released.
 
 ```bash
 python UKBB/figures/make_figures.py     # Fig 2 (UKB) + Fig 3 (external)
@@ -250,14 +252,6 @@ set in the environment (`export EVAL_ROOT=...`) overrides it. Missing variables 
 naming the variable, not a confusing "file not found".
 
 See [`docs/PATHS.md`](docs/PATHS.md) for what each variable means.
-
-## Known issues
-
-- **UK Biobank standalone risk scores are mis-mapped.** The `MAPS["UKBB"]` column mapping in
-  `common/risk/risk_score.py` is incorrect, so any UKB **+Risk** cell (Fig 2) is *provisional*.
-  CHS and MESA risk scores are correct, and the refit-clinical analysis is unaffected. This is
-  flagged inline in `figure_numbers/README.md`.
-- Absolute cluster paths, as described above.
 
 ## License
 
