@@ -93,6 +93,60 @@ So a few hundred recordings are comfortable on CPU (1,000 ECGs ≈ 26 min), whil
 not (100,000 ECGs ≈ 44 h) — use a GPU for that. The ECG+MRI path is substantially heavier: it adds a
 ViT-base over 3 views × 8 frames at 224², so treat a GPU as required there.
 
+## Labels
+
+Only needed for training or fine-tuning. Inference (`infer.py`) requires none.
+
+### Binary / regression targets: `y.npy`
+
+```
+<label_root>/<task>/y.npy      shape (N, 1) float64
+```
+
+**`y.npy` is one global array covering every recording across all splits, indexed by the `idx`
+field stored inside each `.mat`.** It is not per-split and not aligned to manifest order:
+
+```python
+label = np.load(f"{label_dir}/y.npy").squeeze()
+idx   = int(loadmat(mat_path)["idx"].squeeze())
+y     = label[idx]
+```
+
+So `N` is the size of your whole dataset, and row `i` describes the recording whose `.mat` carries
+`idx == i`. Use `NaN` for "no label" — those rows are dropped from loss and metrics, which is how
+partially-labelled cohorts are handled. Binary tasks use `0.0` / `1.0`; regression tasks store the
+value itself.
+
+`tools/prepare_ecg.py` assigns `idx` in the order it converts files (alphabetical within the run),
+so build `y.npy` in that same order — or set `idx` yourself and match it.
+
+### Survival targets
+
+`common/train_eval/build_surv_labels.py` (UKB) and `build_surv_labels_external.py` (CHS/MESA) write
+the survival `y.npy`, which uses a signed-time encoding: `|y|` is the follow-up time and `sign(y)`
+is the event indicator. Build these before running `cox_finetune.py`.
+
+### Split / phenotype CSVs
+
+Three scripts read subject lists from CSV, and all of them key on a column named **`eid_visit`**:
+
+| consumer | file | required columns |
+|---|---|---|
+| `train_mae.py --train_split_dir / --val_split_dir` | every `*.csv` in the directory | `eid_visit` |
+| `stage1_CL_cinema.py --csv_train / --csv_val` | one CSV | `eid_visit` |
+| `downstream_ecgmri_cinema.py --csv_train / --csv_val / --csv_test` | one CSV per split | `eid_visit`, plus a column named after `--outcome` |
+
+Example (`af5.csv`):
+
+```csv
+eid_visit,af5
+1029163_2,1
+1030481_2,0
+```
+
+`eid_visit` must match the MRI subject directory name and the `.mat` stem, since that is how the
+three modalities are joined. Rows whose outcome is missing are dropped.
+
 ## MRI
 
 ### Layout

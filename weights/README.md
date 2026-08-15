@@ -8,6 +8,8 @@ produces it, and what consumes it.
 | `ecgfm_mimic_iv_physionet.pt` | ECG-FM backbone (McKeen et al.), loaded via `fairseq-signals` `build_model_from_checkpoint` | upstream ECG-FM / fairseq-signals release | every ECG script — builds the ECG encoder architecture before the aligned weights are loaded on top |
 | `cinema_mae_m75.pth` | self-supervised MRI encoder: cross-view CineMA MAE, mask ratio 0.75, ViT-base | `UKBB/pretrain_mri/train_mae.py` | `UKBB/contrastive/stage1_CL_cinema.py` (`--mae_ckpt`) — only needed to re-run contrastive alignment from scratch |
 | `stage1_cinema_m75.pth` | **the headline model** — ECG↔MRI contrastively aligned encoder (~2.2 GB) | `UKBB/contrastive/stage1_CL_cinema.py` | `UKBB/downstream/downstream_ecgmri_cinema.py` (`--cl_ckpt`), `run_cox.sh`, and all CHS/MESA zero-/few-shot evaluation |
+| `downstream_m75/af5_ecg.pth`, `hf5_ecg.pth` | AF / HF classifier fine-tuned on UK Biobank, **ECG only** (~0.7 GB each) | `downstream_ecgmri_cinema.py --mode ecg` | `infer.py --mode ecg` — ready to score ECGs, no fine-tuning needed |
+| `downstream_m75/af5_ecg_mri.pth`, `hf5_ecg_mri.pth` | the same, **ECG + MRI** (~0.7 GB each) | `downstream_ecgmri_cinema.py --mode ecg_mri` | `infer.py --mode ecg_mri` |
 
 ## Where to get them
 
@@ -23,8 +25,9 @@ produces it, and what consumes it.
 
 ## Minimum to run
 
-- **Downstream / evaluation only** (skip re-training the MRI MAE):
-  `ecgfm_mimic_iv_physionet.pt` + `stage1_cinema_m75.pth`.
+- **Score your own ECGs** — no training at all: `ecgfm_mimic_iv_physionet.pt` +
+  one of `downstream_m75/*_ecg.pth`. See the Quick start in the top-level README.
+- **Fine-tune on your own outcome**: `ecgfm_mimic_iv_physionet.pt` + `stage1_cinema_m75.pth`.
 - **Full pipeline from stage 1**: add `cinema_mae_m75.pth`.
 - **Full pipeline from scratch**: nothing beyond `ecgfm_mimic_iv_physionet.pt`, but you need UK
   Biobank MRI access to pretrain the MAE yourself.

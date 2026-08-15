@@ -141,9 +141,47 @@ Three checkpoints are involved; none are committed to this repository. See
 Minimum to score your own ECGs: `ecgfm_mimic_iv_physionet.pt` + one `downstream_m75/*_ecg.pth`.
 Minimum to fine-tune your own task: `ecgfm_mimic_iv_physionet.pt` + `stage1_cinema_m75.pth`.
 
-## Pipeline
+## Fine-tuning on your own outcome
 
-Run in this order. Each stage consumes the previous stage's checkpoint.
+Start from the released aligned encoder rather than training from scratch. You need ECGs in the
+layout above plus a label array; see the **Labels** section of
+[`docs/DATA_FORMAT.md`](docs/DATA_FORMAT.md) for the exact format — in particular, `y.npy` is a
+single global array indexed by the `idx` stored in each `.mat`, not a per-split file.
+
+```bash
+# ECG only
+python common/train_eval/ecg_finetune.py \
+  --model_name CARDIACFM --seed 1 --epochs 20 \
+  --ecg_tsv_dir prepared/ECG_manifest \
+  --label_dir   labels/my_outcome \        # holds y.npy
+  --ecgfm_ckpt  ecgfm_mimic_iv_physionet.pt \
+  --cardiacfm_pretrained_ckpt stage1_cinema_m75.pth \
+  --save_dir    runs/my_outcome
+
+# ECG + MRI
+python UKBB/downstream/downstream_ecgmri_cinema.py \
+  --outcome my_outcome --mode ecg_mri --training_type senc_proj \
+  --cl_ckpt stage1_cinema_m75.pth --ecg_ckpt ecgfm_mimic_iv_physionet.pt \
+  --mri_dir prepared_mri/ --ecg_dir prepared/ECG_manifest \
+  --csv_train splits/train.csv --csv_val splits/valid.csv --csv_test splits/test.csv \
+  --out_dir runs/my_outcome \
+  --view_encoder conv --n_sa_slices 3 \
+  --embed_dim 768 --encoder_depth 12 --encoder_heads 12 --pool per_view
+```
+
+Then score new data with `infer.py --ckpt runs/my_outcome/<best>.pth`.
+
+Other objectives: `ecg_finetune_reg.py` for continuous targets, `cox_finetune.py` for time-to-event
+(build its labels first with `common/train_eval/build_surv_labels.py`).
+
+## Pipeline: training from scratch
+
+Only needed to rebuild the model from raw data. Most users should fine-tune the released encoder
+instead. Run in this order; each stage consumes the previous stage's checkpoint.
+
+All three stages read subject lists from CSVs keyed on `eid_visit`, and the MRI they consume is the
+`vst_*.npy` layout that `tools/prepare_mri.py` produces. Both formats are specified in
+[`docs/DATA_FORMAT.md`](docs/DATA_FORMAT.md).
 
 > The architecture dimensions (`--view_encoder`, `--embed_dim`, `--encoder_depth`,
 > `--encoder_heads`, `--n_sa_slices`, `--pool`) **must be identical across all three stages**.
