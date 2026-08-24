@@ -1,9 +1,7 @@
 """
-ECG-only fine-tune for CHS/MESA external validation. Training logic is COPIED VERBATIM
-from CARDIAC-FM/cardiac_fm/ecg_finetune_binary.py; the only change is the imports:
-ECG models + cosine_lr come from our local model_ecg (no MRI-CNN dependency), and the
-repo's dataset.py is loaded by putting the repo on sys.path (dataset.py itself has no
-broken imports -- it only needs fairseq_signals).
+ECG-only fine-tune for CHS/MESA external validation. ECG models and cosine_lr come
+from the local model_ecg module; the ECG dataset is loaded by putting the repository
+modules on sys.path. This keeps the ECG-only path independent of unused modalities.
 """
 import os
 import sys
@@ -19,8 +17,8 @@ from sklearn.metrics import roc_auc_score
 import torch.multiprocessing as mp
 mp.set_sharing_strategy("file_system")
 
-# --- local ECG models (no MRI-CNN import) ---
-_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # cardiacfm_new/
+# --- local ECG models ---
+_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # repository root
 sys.path.insert(0, os.path.join(_ROOT, "common", "ecg_encoder"))   # model_ecg.py
 sys.path.insert(0, os.path.join(_ROOT, "common", "data"))          # ecg_dataset.py (vendored)
 from model_ecg import ECGFM, CARDIACFM_ECG, cosine_lr

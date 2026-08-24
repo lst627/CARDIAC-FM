@@ -1,10 +1,7 @@
 """
 Self-contained ECG-only models + risk fusion + cosine schedule for the CHS/MESA
-external validation. Logic is COPIED VERBATIM from CARDIAC-FM's cardiac_fm/model.py
-and cardiac_fm/utils.py, with ONE difference: no MRI-CNN imports. The repo's model.py
-imports the MRI densenet/VGG stack at module load (model.py -> utils.py ->
-CNN_LSTM.frame.vgg), which crashes on modern torchvision (`model_urls` was removed).
-The ECG path never uses that stack, so we drop it here and run cleanly in mri_env.
+external validation. The ECG-side definitions are kept independent of the MRI encoder
+so ECG-only tasks import only the dependencies they use and run cleanly in mri_env.
 """
 import torch
 import torch.nn as nn

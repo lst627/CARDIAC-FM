@@ -144,15 +144,26 @@ checkpoint that matches both the outcome (`af5` or `hf5`) and input mode (`ecg` 
 The stage-1 and ECG-FM checkpoints are still required to construct the model before the fine-tuned
 weights are loaded.
 
-Prepare the ECG/MRI inputs and split CSVs as described in [`docs/DATA_FORMAT.md`](docs/DATA_FORMAT.md),
-then run:
+### Example: adapt our fine-tuned AF model to a new outcome
+
+This example continues training from our ECG+MRI model fine-tuned for five-year AF. First download
+the aligned encoder and the matching fine-tuned checkpoint (the ECG-FM backbone comes from its
+upstream release):
 
 ```bash
-# ECG + MRI, warm-started from our UKB-fine-tuned AF model
+hf download lst627/CARDIAC-FM stage1_cinema_m75.pth --local-dir weights
+hf download lst627/CARDIAC-FM downstream_m75/af5_ecg_mri.pth --local-dir weights
+```
+
+Prepare the ECG/MRI inputs and split CSVs as described in [`docs/DATA_FORMAT.md`](docs/DATA_FORMAT.md),
+then fine-tune on `my_outcome`:
+
+```bash
 python UKBB/downstream/downstream_ecgmri_cinema.py \
   --outcome my_outcome --mode ecg_mri --training_type senc_proj \
-  --cl_ckpt stage1_cinema_m75.pth --ecg_ckpt ecgfm_mimic_iv_physionet.pt \
-  --finetuned_ckpt downstream_m75/af5_ecg_mri.pth \
+  --cl_ckpt weights/stage1_cinema_m75.pth \
+  --ecg_ckpt /path/to/ecgfm_mimic_iv_physionet.pt \
+  --finetuned_ckpt weights/downstream_m75/af5_ecg_mri.pth \
   --mri_dir prepared_mri/ --ecg_dir prepared/ECG_manifest \
   --csv_train splits/train.csv --csv_val splits/valid.csv --csv_test splits/test.csv \
   --out_dir runs/my_outcome \
@@ -165,7 +176,16 @@ For ECG-only continued fine-tuning, use `--mode ecg` and the matching
 `--finetuned_ckpt` only when intentionally training a fresh downstream head from the stage-1 aligned
 encoder.
 
-Then score new data with `infer.py --ckpt runs/my_outcome/<best>.pth`.
+The trainer writes `runs/my_outcome/downstream_my_outcome_ecg_mri_best.pth`. Use that fine-tuned
+model to score new, unlabeled data:
+
+```bash
+python infer.py --mode ecg_mri \
+  --ecg_dir prepared/ECG_manifest --mri_dir prepared_mri/ --split test \
+  --ckpt runs/my_outcome/downstream_my_outcome_ecg_mri_best.pth \
+  --ecg_ckpt /path/to/ecgfm_mimic_iv_physionet.pt \
+  --out runs/my_outcome/predictions.csv
+```
 
 Other objectives: `ecg_finetune_reg.py` for continuous targets, `cox_finetune.py` for time-to-event
 (build its labels first with `common/train_eval/build_surv_labels.py`).
