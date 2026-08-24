@@ -347,6 +347,9 @@ def main():
     parser.add_argument("--n_sa_slices",   type=int, default=3)
     parser.add_argument("--cl_ckpt",       required=True)
     parser.add_argument("--ecg_ckpt",      required=True)
+    parser.add_argument("--finetuned_ckpt", default="",
+                        help="warm-start from our released fine-tuned m75 checkpoint; must match "
+                             "--mode and the model architecture")
     parser.add_argument("--mri_dir",       required=True)
     parser.add_argument("--ecg_dir",       required=True)
     parser.add_argument("--csv_train",     required=True)
@@ -426,6 +429,13 @@ def main():
                                   unfreeze_blocks=args.unfreeze_blocks, pool=args.pool)
     model = nn.DataParallel(model)
     model.to(device)
+    if args.finetuned_ckpt:
+        ck = torch.load(args.finetuned_ckpt, map_location=device, weights_only=False)
+        sd = ck["model"] if isinstance(ck, dict) and "model" in ck else ck
+        target = model.module if hasattr(model, "module") else model
+        target.load_state_dict(sd, strict=True)
+        print(f"[downstream] based on our fine-tuned model: {args.finetuned_ckpt}")
+
     print(f"trainable params: {sum(p.numel() for p in model.parameters() if p.requires_grad):,}")
 
     # Eval-only: load a trained downstream checkpoint, dump per-sample test predictions, exit.
@@ -499,7 +509,7 @@ def main():
     results = {
         "outcome": args.outcome, "mode": args.mode, "training_type": args.training_type,
         "batch_size": args.batch_size, "lr": args.lr, "lr_ecg": lr_ecg, "lr_mri": lr_mri,
-        "epochs": args.epochs, "cl_ckpt": args.cl_ckpt,
+        "epochs": args.epochs, "cl_ckpt": args.cl_ckpt, "finetuned_ckpt": args.finetuned_ckpt,
         "select_by": args.select_by, "best_epoch": best_epoch,
         "best_val_loss": best_val_loss, "best_val_auroc": best_val_auc,
         "test_auroc": best_test_auc,

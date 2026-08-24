@@ -19,10 +19,6 @@ produces it, and what consumes it.
 - **`cinema_mae_m75.pth`** and **`stage1_cinema_m75.pth`** — released alongside this repository at
   <https://huggingface.co/lst627/CARDIAC-FM>.
 
-> **Check the revision before you download.** The Hugging Face repository has hosted checkpoints for
-> more than one version of this model. Weights published for the earlier DenseNet+LSTM MRI encoder are
-> **not** loadable by this code — see the "Note on model versions" in the top-level README.
-
 ## Minimum to run
 
 - **Score your own ECGs** — no training at all: `ecgfm_mimic_iv_physionet.pt` +
@@ -31,6 +27,9 @@ produces it, and what consumes it.
 - **Full pipeline from stage 1**: add `cinema_mae_m75.pth`.
 - **Full pipeline from scratch**: nothing beyond `ecgfm_mimic_iv_physionet.pt`, but you need UK
   Biobank MRI access to pretrain the MAE yourself.
+- **Continue fine-tuning based on our fine-tuned model**: add the matching
+  `downstream_m75/{af5,hf5}_{ecg,ecg_mri}.pth` checkpoint and pass it with `--finetuned_ckpt` as
+  shown in the top-level README.
 
 ## Pointing the scripts at them
 

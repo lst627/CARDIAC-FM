@@ -32,12 +32,6 @@ Supported input configurations:
 - ECG + clinical risk scores (CHARGE-AF / PREVENT-HF)
 - ECG + MRI + clinical risk scores
 
-> **Note on model versions.** This is the CineMA-based implementation (m75). An earlier
-> DenseNet+LSTM ("CNN-LSTM") MRI encoder was used in the initial release of this repository; it has
-> been removed from `main` and remains available in the git history at tag/commit `277b3eb`. If you
-> are loading checkpoints published before this change, use that revision instead — the two
-> architectures are **not** checkpoint-compatible.
-
 ## Repository layout
 
 ```
@@ -143,31 +137,33 @@ Minimum to fine-tune your own task: `ecgfm_mimic_iv_physionet.pt` + `stage1_cine
 
 ## Fine-tuning on your own outcome
 
-Start from the released aligned encoder rather than training from scratch. You need ECGs in the
-layout above plus a label array; see the **Labels** section of
-[`docs/DATA_FORMAT.md`](docs/DATA_FORMAT.md) for the exact format — in particular, `y.npy` is a
-single global array indexed by the `idx` stored in each `.mat`, not a per-split file.
+**Based on our fine-tuned model:** continued fine-tuning starts from one of the released
+`downstream_m75/` checkpoints, not from randomly initialized downstream weights. Choose the
+checkpoint that matches both the outcome (`af5` or `hf5`) and input mode (`ecg` or `ecg_mri`). The
+`--mode`, `--view_encoder`, `--pool`, and encoder dimensions must match the selected checkpoint.
+The stage-1 and ECG-FM checkpoints are still required to construct the model before the fine-tuned
+weights are loaded.
+
+Prepare the ECG/MRI inputs and split CSVs as described in [`docs/DATA_FORMAT.md`](docs/DATA_FORMAT.md),
+then run:
 
 ```bash
-# ECG only
-python common/train_eval/ecg_finetune.py \
-  --model_name CARDIACFM --seed 1 --epochs 20 \
-  --ecg_tsv_dir prepared/ECG_manifest \
-  --label_dir   labels/my_outcome \        # holds y.npy
-  --ecgfm_ckpt  ecgfm_mimic_iv_physionet.pt \
-  --cardiacfm_pretrained_ckpt stage1_cinema_m75.pth \
-  --save_dir    runs/my_outcome
-
-# ECG + MRI
+# ECG + MRI, warm-started from our UKB-fine-tuned AF model
 python UKBB/downstream/downstream_ecgmri_cinema.py \
   --outcome my_outcome --mode ecg_mri --training_type senc_proj \
   --cl_ckpt stage1_cinema_m75.pth --ecg_ckpt ecgfm_mimic_iv_physionet.pt \
+  --finetuned_ckpt downstream_m75/af5_ecg_mri.pth \
   --mri_dir prepared_mri/ --ecg_dir prepared/ECG_manifest \
   --csv_train splits/train.csv --csv_val splits/valid.csv --csv_test splits/test.csv \
   --out_dir runs/my_outcome \
   --view_encoder conv --n_sa_slices 3 \
   --embed_dim 768 --encoder_depth 12 --encoder_heads 12 --pool per_view
 ```
+
+For ECG-only continued fine-tuning, use `--mode ecg` and the matching
+`--finetuned_ckpt downstream_m75/af5_ecg.pth` (or the corresponding `hf5` checkpoint). Omit
+`--finetuned_ckpt` only when intentionally training a fresh downstream head from the stage-1 aligned
+encoder.
 
 Then score new data with `infer.py --ckpt runs/my_outcome/<best>.pth`.
 
