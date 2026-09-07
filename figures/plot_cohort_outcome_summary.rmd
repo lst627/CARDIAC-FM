@@ -1,0 +1,219 @@
+---
+title: "Cohort Outcome Summary"
+author: "Fumin Li"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+
+library(dplyr)
+library(ggplot2)
+library(patchwork)
+library(readr)
+library(readxl)
+library(scales)
+library(stringr)
+library(tidyr)
+```
+
+```{r data}
+followup_source_path <- "/Users/fuminli/Desktop/CARDIAC-FM/supplementary_tables_final.xlsx"
+
+row_order <- c(
+  "UKB | AF",
+  "UKB | HF",
+  "CHS | AF",
+  "CHS | HF",
+  "MESA | AF",
+  "MESA | HF"
+)
+
+parse_count_rate <- function(x) {
+  parsed <- str_match(as.character(x), "^([0-9,]+)\\(([-0-9.]+)\\)$")
+  tibble(
+    n = as.numeric(str_remove_all(parsed[, 2], ",")),
+    rate = as.numeric(parsed[, 3])
+  )
+}
+
+extract_outcome <- function(sheet, cohort, outcome_label, outcome_abbr) {
+  sheet_data <- read_excel(followup_source_path, sheet = sheet, col_names = FALSE)
+  outcome_row <- which(sheet_data$...1 == outcome_label)
+  outcome_data <- sheet_data[(outcome_row + 1):(outcome_row + 3), ]
+  followup_time_value <- sheet_data %>%
+    filter(`...1` == "Follow-up time, median(Q1, Q3), year") %>%
+    pull(`...2`) %>%
+    as.character() %>%
+    str_squish() %>%
+    str_replace_all(",\\s*", ", ")
+
+  baseline_positive <- parse_count_rate(outcome_data$...2[1])
+  baseline_total <- outcome_data$...2 %>%
+    parse_count_rate() %>%
+    pull(n) %>%
+    head(2) %>%
+    sum(na.rm = TRUE)
+  baseline_event_rate <- 100 * baseline_positive$n / baseline_total
+
+  followup_positive <- parse_count_rate(outcome_data$...3[1])
+  followup_total <- outcome_data$...3 %>%
+    parse_count_rate() %>%
+    pull(n) %>%
+    head(2) %>%
+    sum(na.rm = TRUE)
+  followup_event_rate <- 100 * followup_positive$n / followup_total
+
+  tibble(
+    cohort = cohort,
+    outcome = outcome_abbr,
+    row_label = paste(cohort, outcome_abbr, sep = " | "),
+    baseline_label = sprintf(
+      "N=%s\nEvents=%s (%.1f%%)",
+      comma(baseline_total),
+      comma(baseline_positive$n),
+      baseline_event_rate
+    ),
+    baseline_rate = baseline_event_rate,
+    followup_cohort_label = if_else(
+      is.na(followup_positive$n),
+      "-",
+      sprintf(
+        "N=%s\nEvents=%s (%.1f%%)",
+        comma(followup_total),
+        comma(followup_positive$n),
+        followup_event_rate
+      )
+    ),
+    followup_rate = followup_event_rate,
+    followup_time_label = followup_time_value
+  )
+}
+
+summary_data <- bind_rows(
+  extract_outcome("Table2", "UKB", "5-year Incident Atrial Fibrillation, N (%)", "AF"),
+  extract_outcome("Table2", "UKB", "5-year Incident Heart Failure, N (%)", "HF"),
+  extract_outcome("Table3", "CHS", "5-year Incident Atrial Fibrillation, N (%)", "AF"),
+  extract_outcome("Table3", "CHS", "5-year Incident Heart Failure, N (%)", "HF"),
+  extract_outcome("Table4", "MESA", "5-year Incident Atrial Fibrillation, N (%)", "AF"),
+  extract_outcome("Table4", "MESA", "5-year Incident Heart Failure, N (%)", "HF")
+) %>%
+  mutate(row_label = factor(row_label, levels = rev(row_order)))
+
+plot_grid <- summary_data %>%
+  select(row_label, baseline_label, baseline_rate, followup_cohort_label, followup_rate) %>%
+  pivot_longer(
+    cols = c(baseline_label, followup_cohort_label),
+    names_to = "cohort_period",
+    values_to = "cell_label"
+  ) %>%
+  mutate(
+    positive_rate = if_else(cohort_period == "baseline_label", baseline_rate, followup_rate),
+    cohort_period = recode(
+      cohort_period,
+      "baseline_label" = "Baseline cohort",
+      "followup_cohort_label" = "Follow-up cohort"
+    ),
+    cohort_period = factor(cohort_period, levels = c("Baseline cohort", "Follow-up cohort")),
+    row_label = factor(row_label, levels = rev(row_order)),
+    y = recode(
+      as.character(row_label),
+      "UKB | AF" = 6,
+      "UKB | HF" = 5,
+      "CHS | AF" = 4,
+      "CHS | HF" = 3,
+      "MESA | AF" = 2,
+      "MESA | HF" = 1
+    ),
+    fill_rate = positive_rate
+  )
+
+followup_data <- summary_data %>%
+  distinct(cohort, followup_time_label) %>%
+  mutate(
+    y = recode(cohort, "UKB" = 5.5, "CHS" = 3.5, "MESA" = 1.5),
+    x = "Follow-up time\nmedian (Q1, Q3), years"
+  )
+```
+
+```{r figure, fig.width=9.6, fig.height=5.1, dpi=300}
+base_family <- "Helvetica"
+
+p_cells <- ggplot(plot_grid, aes(x = cohort_period, y = y)) +
+  geom_tile(
+    data = filter(plot_grid, is.na(fill_rate)),
+    fill = "#F2F3F0",
+    color = "white",
+    linewidth = 0.9,
+    width = 0.98,
+    height = 0.90
+  ) +
+  geom_tile(
+    data = filter(plot_grid, !is.na(fill_rate)),
+    aes(fill = fill_rate),
+    color = "white",
+    linewidth = 0.9,
+    width = 0.98,
+    height = 0.90
+  ) +
+  geom_text(
+    aes(label = cell_label, color = is.na(fill_rate)),
+    lineheight = 0.95,
+    size = 3.2,
+    family = base_family
+  ) +
+  scale_fill_gradientn(
+    colours = c("#E8F3F1", "#F4D9BD", "#C65A46"),
+    values = rescale(c(2, 7, 14.5)),
+    limits = c(2, 14.5),
+    oob = squish,
+    breaks = c(5, 10),
+    labels = label_percent(scale = 1, accuracy = 1),
+    name = "Positive rate"
+  ) +
+  scale_color_manual(values = c("FALSE" = "#172026", "TRUE" = "#777A7D"), guide = "none") +
+  scale_x_discrete(limits = c("Baseline cohort", "Follow-up cohort"), position = "top") +
+  scale_y_continuous(
+    limits = c(0.5, 6.5),
+    breaks = 6:1,
+    labels = row_order,
+    expand = c(0, 0)
+  ) +
+  labs(
+    x = NULL,
+    y = NULL
+  ) +
+  theme_minimal(base_family = base_family, base_size = 11) +
+  theme(
+    axis.text.x = element_text(face = "bold", color = "#172026", size = 10),
+    axis.text.y = element_text(color = "#172026", size = 10, hjust = 1),
+    panel.grid = element_blank(),
+    legend.position = "bottom",
+    legend.justification = "center",
+    legend.box.margin = margin(t = 8),
+    legend.title = element_text(size = 9),
+    legend.text = element_text(size = 8),
+    plot.margin = margin(8, 0, 8, 8)
+  )
+
+p_followup <- ggplot(followup_data, aes(x = "Median follow-up\n(Q1-Q3), years", y = y)) +
+  geom_tile(fill = "#263746", color = "white", linewidth = 0.9, width = 0.98, height = 1.88) +
+  geom_text(aes(label = followup_time_label), color = "white", lineheight = 0.92, size = 3.2, family = base_family) +
+  scale_x_discrete(position = "top") +
+  scale_y_continuous(limits = c(0.5, 6.5), breaks = 1:6, labels = NULL, expand = c(0, 0)) +
+  labs(x = NULL, y = NULL) +
+  theme_minimal(base_family = base_family, base_size = 11) +
+  theme(
+    axis.text.x = element_text(face = "bold", color = "#172026", size = 10),
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank(),
+    panel.grid = element_blank(),
+    plot.margin = margin(65, 8, 36, 4)
+  )
+
+summary_plot <- p_cells + p_followup + plot_layout(widths = c(2.6, 1.05), guides = "keep")
+
+summary_plot
+
+```

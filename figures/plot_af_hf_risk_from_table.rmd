@@ -1,0 +1,193 @@
+---
+title: "Figure 4 Risk Stratification From Table"
+author: "Fumin Li"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+
+library(dplyr)
+library(ggplot2)
+library(stringr)
+library(tibble)
+```
+
+```{r table-data}
+rs_model_order <- c(
+  "CARDIAC-FM+\nRisk Score",
+  "Risk Score"
+)
+
+panel_order <- c(
+  "AF",
+  "HF",
+  "HFPEF",
+  "HFREF"
+)
+
+hr_table_text <- "
+Cohort\tModel\tDisease\tAdjustment\tLevel\tHazard Ratio\tHR 95%CI Lower\tHR 95%CI Upper
+CHS\tRisk Score\tAF\tUnadjusted\tIntermediate/Low\t1.873\t1.705\t2.057
+CHS\tRisk Score\tAF\tUnadjusted\tHigh/Low\t3.424\t3.116\t3.762
+CHS\tRisk Score\tAF\tAdjusted\tIntermediate/Low\t1.124\t0.998\t1.267
+CHS\tRisk Score\tAF\tAdjusted\tHigh/Low\t1.104\t0.913\t1.335
+CHS\tCARDIAC-FM (ECG + Risk Score)\tAF\tUnadjusted\tIntermediate/Low\t1.931\t1.754\t2.125
+CHS\tCARDIAC-FM (ECG + Risk Score)\tAF\tUnadjusted\tHigh/Low\t3.615\t3.294\t3.967
+CHS\tCARDIAC-FM (ECG + Risk Score)\tAF\tAdjusted\tIntermediate/Low\t1.45\t1.306\t1.609
+CHS\tCARDIAC-FM (ECG + Risk Score)\tAF\tAdjusted\tHigh/Low\t2.161\t1.915\t2.439
+CHS\tRisk Score\tHF\tUnadjusted\tIntermediate/Low\t2.048\t1.812\t2.314
+CHS\tRisk Score\tHF\tUnadjusted\tHigh/Low\t4.306\t3.818\t4.857
+CHS\tRisk Score\tHF\tAdjusted\tIntermediate/Low\t1.166\t1.007\t1.349
+CHS\tRisk Score\tHF\tAdjusted\tHigh/Low\t1.288\t1.037\t1.6
+CHS\tCARDIAC-FM (ECG + Risk Score)\tHF\tUnadjusted\tIntermediate/Low\t2.241\t1.974\t2.544
+CHS\tCARDIAC-FM (ECG + Risk Score)\tHF\tUnadjusted\tHigh/Low\t5.304\t4.695\t5.992
+CHS\tCARDIAC-FM (ECG + Risk Score)\tHF\tAdjusted\tIntermediate/Low\t1.599\t1.384\t1.847
+CHS\tCARDIAC-FM (ECG + Risk Score)\tHF\tAdjusted\tHigh/Low\t2.744\t2.282\t3.3
+CHS\tRisk Score\tHFPEF\tUnadjusted\tIntermediate/Low\t1.736\t1.441\t2.092
+CHS\tRisk Score\tHFPEF\tUnadjusted\tHigh/Low\t3.104\t2.562\t3.76
+CHS\tRisk Score\tHFPEF\tAdjusted\tIntermediate/Low\t0.99\t0.786\t1.246
+CHS\tRisk Score\tHFPEF\tAdjusted\tHigh/Low\t0.927\t0.649\t1.325
+CHS\tCARDIAC-FM (ECG + Risk Score)\tHFPEF\tUnadjusted\tIntermediate/Low\t2.021\t1.673\t2.442
+CHS\tCARDIAC-FM (ECG + Risk Score)\tHFPEF\tUnadjusted\tHigh/Low\t3.451\t2.844\t4.186
+CHS\tCARDIAC-FM (ECG + Risk Score)\tHFPEF\tAdjusted\tIntermediate/Low\t1.361\t1.091\t1.697
+CHS\tCARDIAC-FM (ECG + Risk Score)\tHFPEF\tAdjusted\tHigh/Low\t1.545\t1.141\t2.09
+CHS\tRisk Score\tHFREF\tUnadjusted\tIntermediate/Low\t1.931\t1.519\t2.456
+CHS\tRisk Score\tHFREF\tUnadjusted\tHigh/Low\t3.552\t2.802\t4.503
+CHS\tRisk Score\tHFREF\tAdjusted\tIntermediate/Low\t1.301\t0.974\t1.739
+CHS\tRisk Score\tHFREF\tAdjusted\tHigh/Low\t1.594\t1.036\t2.453
+CHS\tCARDIAC-FM (ECG + Risk Score)\tHFREF\tUnadjusted\tIntermediate/Low\t2.047\t1.582\t2.647
+CHS\tCARDIAC-FM (ECG + Risk Score)\tHFREF\tUnadjusted\tHigh/Low\t4.997\t3.92\t6.37
+CHS\tCARDIAC-FM (ECG + Risk Score)\tHFREF\tAdjusted\tIntermediate/Low\t1.849\t1.384\t2.469
+CHS\tCARDIAC-FM (ECG + Risk Score)\tHFREF\tAdjusted\tHigh/Low\t4.4\t3.078\t6.29
+MESA\tRisk Score\tAF\tUnadjusted\tIntermediate/Low\t3.565\t2.986\t4.255
+MESA\tRisk Score\tAF\tUnadjusted\tHigh/Low\t9.014\t7.619\t10.663
+MESA\tRisk Score\tAF\tAdjusted\tIntermediate/Low\t1.236\t0.991\t1.543
+MESA\tRisk Score\tAF\tAdjusted\tHigh/Low\t1.131\t0.82\t1.56
+MESA\tCARDIAC-FM (ECG + Risk Score)\tAF\tUnadjusted\tIntermediate/Low\t2.354\t1.995\t2.779
+MESA\tCARDIAC-FM (ECG + Risk Score)\tAF\tUnadjusted\tHigh/Low\t5.977\t5.129\t6.966
+MESA\tCARDIAC-FM (ECG + Risk Score)\tAF\tAdjusted\tIntermediate/Low\t1.135\t0.946\t1.362
+MESA\tCARDIAC-FM (ECG + Risk Score)\tAF\tAdjusted\tHigh/Low\t1.726\t1.408\t2.117
+MESA\tRisk Score\tHF\tUnadjusted\tIntermediate/Low\t3.641\t2.689\t4.93
+MESA\tRisk Score\tHF\tUnadjusted\tHigh/Low\t12.316\t9.271\t16.36
+MESA\tRisk Score\tHF\tAdjusted\tIntermediate/Low\t1.504\t1.054\t2.147
+MESA\tRisk Score\tHF\tAdjusted\tHigh/Low\t2.177\t1.362\t3.479
+MESA\tCARDIAC-FM (ECG + Risk Score)\tHF\tUnadjusted\tIntermediate/Low\t4.53\t3.243\t6.33
+MESA\tCARDIAC-FM (ECG + Risk Score)\tHF\tUnadjusted\tHigh/Low\t16.102\t11.741\t22.084
+MESA\tCARDIAC-FM (ECG + Risk Score)\tHF\tAdjusted\tIntermediate/Low\t2.425\t1.675\t3.513
+MESA\tCARDIAC-FM (ECG + Risk Score)\tHF\tAdjusted\tHigh/Low\t4.874\t3.139\t7.569
+MESA\tRisk Score\tHFPEF\tUnadjusted\tIntermediate/Low\t4.053\t2.475\t6.637
+MESA\tRisk Score\tHFPEF\tUnadjusted\tHigh/Low\t16.264\t10.263\t25.773
+MESA\tRisk Score\tHFPEF\tAdjusted\tIntermediate/Low\t1.62\t0.917\t2.86
+MESA\tRisk Score\tHFPEF\tAdjusted\tHigh/Low\t2.805\t1.356\t5.803
+MESA\tCARDIAC-FM (ECG + Risk Score)\tHFPEF\tUnadjusted\tIntermediate/Low\t3.741\t2.279\t6.141
+MESA\tCARDIAC-FM (ECG + Risk Score)\tHFPEF\tUnadjusted\tHigh/Low\t15.9\t10.047\t25.161
+MESA\tCARDIAC-FM (ECG + Risk Score)\tHFPEF\tAdjusted\tIntermediate/Low\t1.619\t0.934\t2.806
+MESA\tCARDIAC-FM (ECG + Risk Score)\tHFPEF\tAdjusted\tHigh/Low\t3.217\t1.675\t6.18
+MESA\tRisk Score\tHFREF\tUnadjusted\tIntermediate/Low\t3.464\t2.293\t5.232
+MESA\tRisk Score\tHFREF\tUnadjusted\tHigh/Low\t9.251\t6.252\t13.691
+MESA\tRisk Score\tHFREF\tAdjusted\tIntermediate/Low\t1.617\t0.985\t2.656
+MESA\tRisk Score\tHFREF\tAdjusted\tHigh/Low\t2.019\t1.026\t3.973
+MESA\tCARDIAC-FM (ECG + Risk Score)\tHFREF\tUnadjusted\tIntermediate/Low\t5.19\t3.184\t8.459
+MESA\tCARDIAC-FM (ECG + Risk Score)\tHFREF\tUnadjusted\tHigh/Low\t15.104\t9.454\t24.13
+MESA\tCARDIAC-FM (ECG + Risk Score)\tHFREF\tAdjusted\tIntermediate/Low\t3.68\t2.143\t6.319
+MESA\tCARDIAC-FM (ECG + Risk Score)\tHFREF\tAdjusted\tHigh/Low\t7.773\t4.084\t14.796
+"
+
+hr_table <- read.delim(
+  text = hr_table_text,
+  check.names = FALSE,
+  stringsAsFactors = FALSE
+) %>%
+  as_tibble() %>%
+  transmute(
+    cohort = Cohort,
+    model_group = case_when(
+      Model == "CARDIAC-FM (ECG + Risk Score)" ~ "CARDIAC-FM+\nRisk Score",
+      TRUE ~ Model
+    ),
+    panel = factor(Disease, levels = panel_order),
+    adjustment = Adjustment,
+    term = factor(Level, levels = c("Intermediate/Low", "High/Low")),
+    HR = `Hazard Ratio`,
+    lower = `HR 95%CI Lower`,
+    upper = `HR 95%CI Upper`
+  ) %>%
+  mutate(
+    model_group = factor(model_group, levels = rs_model_order)
+  )
+
+fig4_rs_hr <- hr_table %>%
+  filter(adjustment == "Unadjusted")
+
+fig4_rs_multivariable_hr <- hr_table %>%
+  filter(adjustment == "Adjusted")
+```
+
+```{r plot-function}
+term_colors <- c(
+  "Intermediate/Low" = "#F8766D",
+  "High/Low" = "#00BFC4"
+)
+
+plot_hr <- function(df, plot_title) {
+  ggplot(df, aes(x = model_group, y = HR, colour = term)) +
+    geom_point(position = position_dodge(width = 0.45), size = 2.4) +
+    geom_hline(yintercept = 1, color = "black", linewidth = 0.4, linetype = "dashed") +
+    geom_errorbar(
+      aes(ymin = lower, ymax = upper),
+      width = 0.15,
+      position = position_dodge(width = 0.45)
+    ) +
+    facet_wrap(~ panel, ncol = 2, scales = "free_y") +
+    scale_colour_manual(values = term_colors) +
+    theme_bw(base_size = 13) +
+    theme(
+      axis.text.x = element_text(size = 11.5, face = "bold", angle = 0, hjust = 0.5),
+      axis.text.y = element_text(size = 12.5, face = "bold"),
+      strip.text = element_text(face = "bold", size = 14),
+      axis.title = element_text(face = "bold", size = 14),
+      legend.title = element_blank(),
+      legend.text = element_text(face = "bold", size = 12.5),
+      plot.title = element_text(face = "bold", size = 15)
+    ) +
+    labs(
+      title = plot_title,
+      x = NULL,
+      y = "Hazard Ratio (vs. low)"
+    )
+}
+```
+
+```{r chs-rs-plot, fig.width=8, fig.height=6}
+chs_rs_plot <- plot_hr(
+  fig4_rs_hr %>% filter(cohort == "CHS"),
+  "CHS Univariate Hazard Ratios (95% CI)"
+)
+chs_rs_plot
+```
+
+```{r chs-rs-multivariable-plot, fig.width=8, fig.height=6}
+chs_rs_multivariable_plot <- plot_hr(
+  fig4_rs_multivariable_hr %>% filter(cohort == "CHS"),
+  "CHS Multivariable Hazard Ratios (95% CI)"
+)
+chs_rs_multivariable_plot
+```
+
+```{r mesa-rs-plot, fig.width=8, fig.height=6}
+mesa_rs_plot <- plot_hr(
+  fig4_rs_hr %>% filter(cohort == "MESA"),
+  "MESA Univariate Hazard Ratios (95% CI)"
+)
+mesa_rs_plot
+```
+
+```{r mesa-rs-multivariable-plot, fig.width=8, fig.height=6}
+mesa_rs_multivariable_plot <- plot_hr(
+  fig4_rs_multivariable_hr %>% filter(cohort == "MESA"),
+  "MESA Multivariable Hazard Ratios (95% CI)"
+)
+mesa_rs_multivariable_plot
+```

@@ -1,0 +1,304 @@
+---
+title: "Fig 5 Few-shot AUROC and AUPRC Panels"
+author: "Fumin Li"
+date: "`r Sys.Date()`"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(readr)
+library(tibble)
+library(stringr)
+library(jsonlite)
+
+fig3_dir <- "/Users/fuminli/Desktop/CARDIAC-FM/figure_numbers_new/fig3_external_zeroshot"
+fig5_dir <- "/Users/fuminli/Desktop/CARDIAC-FM/figure_numbers_new/fig5_fewshot"
+
+auroc_json <- file.path(fig5_dir, "fig5_stats.json")
+
+# fig5_stats.json currently stores one metric as pt/ci. Use it as AUROC.
+# If an AUPRC stats JSON is available later with the same structure, set this path.
+auprc_json <- file.path(fig5_dir, "fig5_auprc_stats.json")
+requested_metrics <- c("auroc", "auprc")
+
+out_dir <- file.path(fig3_dir, "fig5_all_metric_plots")
+dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
+
+model_order <- c(
+  "ECG-FM",
+  "ECGFounder",
+  "DeepECG-SSL",
+  "DeepECG-SL",
+  "CARDIAC-FM (ECG)"
+)
+
+model_colors <- c(
+  "ECG-FM" = "#7A869A",
+  "ECGFounder" = "#0072B2",
+  "DeepECG-SSL" = "#D55E00",
+  "DeepECG-SL" = "#CC79A7",
+  "CARDIAC-FM (ECG)" = "#009E73"
+)
+
+outcome_labels <- c(
+  mi10 = "Myocardial Infarction",
+  is10 = "Ischemic Stroke",
+  cvddth10 = "CV Death",
+  dth10 = "All-cause Death"
+)
+
+fewshot_labels <- c(
+  train_valid_5_5 = "10% Few-shot",
+  train_valid_10_10 = "20% Few-shot"
+)
+
+symbol_map <- c(
+  "ECG-FM" = "*",
+  "ECGFounder" = "\u2020",
+  "DeepECG-SSL" = "\u2021",
+  "DeepECG-SL" = "\u00A7"
+)
+
+caption_text <- paste0(
+  "Marks on CARDIAC-FM bars indicate baselines significantly outperformed by CARDIAC-FM ",
+  "(paired bootstrap p<0.05): * ECG-FM   \u2020 ECGFounder   ",
+  "\u2021 DeepECG-SSL   \u00A7 DeepECG-SL"
+)
+```
+
+```{r}
+parse_fig5_json <- function(json_file, metric_name) {
+  if (!file.exists(json_file)) {
+    return(tibble())
+  }
+
+  fig_json <- fromJSON(json_file, simplifyVector = FALSE)
+  rows <- list()
+
+  for (key in names(fig_json)) {
+    if (startsWith(key, "_")) next
+
+    key_parts <- str_split_fixed(key, "\\|", 2)
+    dataset_i <- key_parts[, 1]
+    split_i <- key_parts[, 2]
+    fewshot_i <- unname(fewshot_labels[split_i])
+
+    for (entry in fig_json[[key]]) {
+      outcome_i <- entry$o
+      outcome_display_i <- unname(outcome_labels[outcome_i])
+      marks_i <- entry$marks %||% ""
+
+      for (model_i in names(entry$pt)) {
+        ci_i <- entry$ci[[model_i]]
+
+        rows[[length(rows) + 1]] <- tibble(
+          dataset = dataset_i,
+          split = split_i,
+          fewshot = fewshot_i,
+          outcome = outcome_i,
+          outcome_display = outcome_display_i,
+          metric = metric_name,
+          model = model_i,
+          value = entry$pt[[model_i]],
+          ci_lo = ci_i[[1]],
+          ci_hi = ci_i[[2]],
+          npos = entry$npos,
+          nn = entry$nn,
+          sig_label = ifelse(model_i == "CARDIAC-FM (ECG)", marks_i, "")
+        )
+      }
+    }
+  }
+
+  bind_rows(rows)
+}
+
+`%||%` <- function(x, y) {
+  if (is.null(x)) y else x
+}
+
+metrics <- bind_rows(
+  parse_fig5_json(auroc_json, "auroc"),
+  parse_fig5_json(auprc_json, "auprc")
+) %>%
+  mutate(
+    fewshot = factor(fewshot, levels = c("10% Few-shot", "20% Few-shot")),
+    outcome_display = factor(outcome_display, levels = unname(outcome_labels)),
+    metric = factor(metric, levels = c("auroc", "auprc")),
+    model = factor(model, levels = model_order)
+  )
+
+if (nrow(metrics) == 0) {
+  stop("No Fig 5 metric data found.")
+}
+
+available_metrics <- sort(unique(as.character(metrics$metric)))
+missing_metrics <- setdiff(requested_metrics, available_metrics)
+
+write_csv(metrics, file.path(out_dir, "fig5_all_metrics_long.csv"))
+```
+
+```{r}
+if (length(missing_metrics) > 0) {
+  cat(
+    paste0(
+      "Missing metric source: ",
+      paste(toupper(missing_metrics), collapse = ", "),
+      ". Current fig5_stats.json contains only one pt/ci block, used here as AUROC. ",
+      "To generate AUPRC panels, provide an AUPRC JSON with the same structure and set auprc_json.\n"
+    )
+  )
+}
+```
+
+```{r}
+plot_dataset_fewshot_panel <- function(df, dataset_i, fewshot_i, metric_i) {
+  plot_df <- df %>%
+    filter(
+      dataset == dataset_i,
+      fewshot == fewshot_i,
+      metric == metric_i,
+      model %in% model_order
+    ) %>%
+    arrange(outcome_display, model)
+
+  if (nrow(plot_df) == 0) return(NULL)
+
+  y_min <- min(plot_df$ci_lo, na.rm = TRUE)
+  y_max <- max(plot_df$ci_hi, na.rm = TRUE)
+  y_pad <- max(0.025, (y_max - y_min) * 0.18)
+  y_lower <- max(0, floor((y_min - y_pad) * 20) / 20)
+  y_upper <- min(1, ceiling((y_max + y_pad) * 20) / 20)
+  metric_label <- toupper(as.character(metric_i))
+
+  ggplot(plot_df, aes(x = outcome_display, y = value, fill = model, group = model)) +
+    geom_col(
+      position = position_dodge(width = 0.86),
+      width = 0.72,
+      color = "white",
+      linewidth = 0.35,
+      na.rm = TRUE
+    ) +
+    geom_errorbar(
+      aes(ymin = ci_lo, ymax = ci_hi),
+      position = position_dodge(width = 0.86),
+      width = 0.14,
+      linewidth = 0.55,
+      color = "#333333",
+      na.rm = TRUE
+    ) +
+    geom_text(
+      aes(y = ci_hi + y_pad * 0.22, label = sig_label),
+      position = position_dodge(width = 0.86),
+      size = 6,
+      fontface = "bold",
+      color = "black",
+      vjust = 0,
+      na.rm = TRUE
+    ) +
+    scale_fill_manual(
+      values = model_colors[model_order],
+      breaks = model_order,
+      limits = model_order
+    ) +
+    scale_y_continuous(
+      breaks = seq(0, 1, 0.05),
+      expand = expansion(mult = c(0, 0.04))
+    ) +
+    coord_cartesian(ylim = c(y_lower, y_upper)) +
+    labs(
+      x = NULL,
+      y = metric_label,
+      fill = NULL,
+      title = paste(dataset_i, fewshot_i, metric_label),
+      caption = str_wrap(caption_text, width = 95)
+    ) +
+    guides(
+      fill = guide_legend(nrow = 2, byrow = TRUE)
+    ) +
+    theme_classic(base_size = 16) +
+    theme(
+      legend.position = "top",
+      legend.justification = "center",
+      legend.text = element_text(face = "bold", size = 10.5),
+      legend.key.size = unit(0.45, "cm"),
+      legend.spacing.x = unit(0.18, "cm"),
+      legend.margin = margin(b = 2),
+
+      plot.title = element_text(size = 17, color = "black", face = "bold", hjust = 0.5),
+      axis.text.x = element_text(size = 13, color = "black", face = "bold"),
+      axis.text.y = element_text(size = 13.5, color = "black", face = "bold"),
+      axis.title.y = element_text(size = 16, color = "black", face = "bold", lineheight = 0.95),
+
+      panel.grid.major.y = element_line(color = "#E2E6EC", linewidth = 0.5),
+      panel.grid.minor = element_blank(),
+
+      plot.caption = element_text(
+        size = 10,
+        hjust = 0.5,
+        margin = margin(t = 14),
+        face = "bold",
+        lineheight = 1.05
+      ),
+      plot.margin = margin(10, 18, 24, 38)
+    )
+}
+
+save_fig5_panel <- function(p, dataset_i, fewshot_i, metric_i) {
+  stem <- paste(dataset_i, fewshot_i, metric_i, sep = "_") %>%
+    str_replace_all("%", "percent") %>%
+    str_replace_all("[^A-Za-z0-9_]+", "_") %>%
+    str_replace_all("_+", "_") %>%
+    str_remove("_$") %>%
+    str_to_lower()
+
+  ggsave(file.path(out_dir, paste0(stem, ".pdf")), p, width = 8.8, height = 5.4, device = cairo_pdf)
+  ggsave(file.path(out_dir, paste0(stem, ".png")), p, width = 8.8, height = 5.4, dpi = 300)
+}
+```
+
+```{r}
+plot_index <- metrics %>%
+  distinct(dataset, fewshot, metric) %>%
+  arrange(
+    match(dataset, c("CHS", "MESA")),
+    fewshot,
+    metric
+  )
+
+fig5_all_plots <- list()
+
+for (i in seq_len(nrow(plot_index))) {
+  dataset_i <- plot_index$dataset[i]
+  fewshot_i <- as.character(plot_index$fewshot[i])
+  metric_i <- as.character(plot_index$metric[i])
+
+  p <- plot_dataset_fewshot_panel(metrics, dataset_i, fewshot_i, metric_i)
+
+  if (!is.null(p)) {
+    plot_name <- paste(dataset_i, fewshot_i, metric_i, sep = "_") %>%
+      str_replace_all("%", "percent") %>%
+      str_replace_all("[^A-Za-z0-9_]+", "_") %>%
+      str_replace_all("_+", "_") %>%
+      str_remove("_$") %>%
+      str_to_lower()
+
+    fig5_all_plots[[plot_name]] <- p
+    save_fig5_panel(p, dataset_i, fewshot_i, metric_i)
+  }
+}
+
+length(fig5_all_plots)
+```
+
+```{r, fig.width=8.8, fig.height=5.4}
+fig5_all_plots[[6]]
+```

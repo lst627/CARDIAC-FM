@@ -1,0 +1,190 @@
+---
+title: "CMR Feature Hazard Ratios"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+
+library(dplyr)
+library(ggplot2)
+library(jsonlite)
+library(readr)
+library(stringr)
+```
+
+```{r paths}
+base_dir <- "/Users/fuminli/Desktop/CARDIAC-FM"
+data_path <- file.path(
+  base_dir,
+  "figure_numbers_new",
+  "supp_cmr_feature_cox",
+  "cmr_feature_cox_external_seed3_stats.json"
+)
+
+output_dir <- base_dir
+```
+
+```{r load-data}
+cmr_cox <- fromJSON(data_path, simplifyDataFrame = TRUE)
+
+feature_order <- c("laef", "lavmax", "lavmin", "lvedv", "lvesv", "lvm", "lvef")
+feature_labels <- c(
+  laef = "LAEF",
+  lavmax = "LAVmax",
+  lavmin = "LAVmin",
+  lvedv = "LVEDV",
+  lvesv = "LVESV",
+  lvm = "LVM",
+  lvef = "LVEF"
+)
+
+outcome_order <- c("af", "hf", "hfref", "hfpef")
+outcome_labels <- c(
+  af = "AF",
+  hf = "HF",
+  hfref = "HFREF",
+  hfpef = "HFPEF"
+)
+
+hr_breaks <- function(x) {
+  x <- range(x, finite = TRUE)
+  step <- case_when(
+    diff(x) <= 0.45 ~ 0.1,
+    diff(x) <= 0.90 ~ 0.2,
+    TRUE ~ 0.5
+  )
+
+  if (diff(x) <= 3 * step) {
+    y_min <- floor(x[1] / step) * step
+    if (y_min + 3 * step < x[2]) {
+      y_min <- ceiling((x[2] - 3 * step) / step) * step
+    }
+  } else {
+    y_mid <- mean(x)
+    y_min <- round((y_mid - 1.5 * step) / step) * step
+  }
+
+  y_min + 0:3 * step
+}
+
+hr_limits <- function(x) {
+  breaks <- hr_breaks(x)
+  c(min(x, breaks, na.rm = TRUE), max(x, breaks, na.rm = TRUE))
+}
+
+chs_plotdata <- cmr_cox$CHS_pred %>%
+  filter(feature %in% feature_order, outcome %in% outcome_order) %>%
+  mutate(
+    feature_label = factor(feature_labels[feature], levels = feature_labels[feature_order]),
+    outcome_label = factor(outcome_labels[outcome], levels = outcome_labels[outcome_order])
+  )
+
+write_csv(chs_plotdata, file.path(output_dir, "chs_pred_cmr_feature_hr.csv"))
+```
+
+```{r plot}
+p_chs <- ggplot(chs_plotdata, aes(x = feature_label, y = HR)) +
+  geom_hline(yintercept = 1, color = "black", linewidth = 0.35, linetype = "dashed") +
+  geom_errorbar(
+    aes(ymin = HR_low, ymax = HR_high),
+    width = 0.08,
+    linewidth = 0.45,
+    color = "#2A9D8F"
+  ) +
+  geom_point(color = "#2A9D8F", size = 1.3) +
+  facet_grid(outcome_label ~ ., scales = "free_y") +
+  scale_y_continuous(
+    limits = hr_limits,
+    breaks = hr_breaks,
+    labels = scales::label_number(accuracy = 0.1),
+    expand = expansion(mult = c(0.02, 0.04))
+  ) +
+  labs(x = NULL, y = NULL) +
+  theme_bw(base_size = 18) +
+  theme(
+    panel.grid.major = element_line(color = "grey88", linewidth = 0.5),
+    panel.grid.minor = element_line(color = "grey93", linewidth = 0.35),
+    panel.border = element_rect(color = "grey25", linewidth = 0.5),
+    strip.background = element_rect(fill = "grey70", color = "grey25", linewidth = 0.5),
+    strip.text.y = element_text(face = "bold", size = 12, angle = 270),
+    axis.text.x = element_text(angle = 45, hjust = 1, face = "bold", size = 12),
+    axis.text.y = element_text(face = "bold", size = 12),
+    plot.margin = margin(5, 8, 5, 5),
+    legend.position = "none"
+  )
+
+p_chs
+```
+
+```{r save-plot}
+ggsave(
+  file.path(output_dir, "chs_pred_cmr_feature_hr.png"),
+  p_chs,
+  width = 7,
+  height = 7.5,
+  dpi = 300
+)
+```
+
+```{r load-mesa-data}
+mesa_plotdata <- bind_rows(
+  cmr_cox$MESA_meas %>% mutate(type = "MRI-measured"),
+  cmr_cox$MESA_pred %>% mutate(type = "ECG-predicted")
+) %>%
+  filter(feature %in% feature_order, outcome %in% outcome_order) %>%
+  mutate(
+    feature_label = factor(feature_labels[feature], levels = feature_labels[feature_order]),
+    outcome_label = factor(outcome_labels[outcome], levels = outcome_labels[outcome_order]),
+    type = factor(type, levels = c("MRI-measured", "ECG-predicted"))
+  )
+
+write_csv(mesa_plotdata, file.path(output_dir, "mesa_cmr_feature_hr.csv"))
+```
+
+```{r plot-mesa}
+p_mesa <- ggplot(mesa_plotdata, aes(x = feature_label, y = HR, color = type)) +
+  geom_hline(yintercept = 1, color = "black", linewidth = 0.35, linetype = "dashed") +
+  geom_errorbar(
+    aes(ymin = HR_low, ymax = HR_high),
+    position = position_dodge(width = 0.6),
+    width = 0.18,
+    linewidth = 0.45
+  ) +
+  geom_point(position = position_dodge(width = 0.6), size = 1.3) +
+  facet_grid(outcome_label ~ ., scales = "free_y") +
+  scale_y_continuous(
+    limits = hr_limits,
+    breaks = hr_breaks,
+    labels = scales::label_number(accuracy = 0.1),
+    expand = expansion(mult = c(0.02, 0.04))
+  ) +
+  scale_color_manual(values = c("MRI-measured" = "#E76F51", "ECG-predicted" = "#2A9D8F")) +
+  labs(x = NULL, y = "Hazard Ratios (95% CI)", color = NULL) +
+  theme_bw(base_size = 18) +
+  theme(
+    panel.grid.major = element_line(color = "grey88", linewidth = 0.5),
+    panel.grid.minor = element_line(color = "grey93", linewidth = 0.35),
+    panel.border = element_rect(color = "grey25", linewidth = 0.5),
+    strip.background = element_rect(fill = "grey70", color = "grey25", linewidth = 0.5),
+    strip.text.y = element_text(face = "bold", size = 12, angle = 270),
+    axis.text.x = element_text(angle = 45, hjust = 1, face = "bold", size = 12),
+    axis.text.y = element_text(face = "bold", size = 12),
+    axis.title.y = element_text(face = "bold", size = 14),
+    legend.position = "bottom",
+    legend.text = element_text(size = 12, face = "bold"),
+    plot.margin = margin(5, 8, 5, 5)
+  )
+
+p_mesa
+```
+
+```{r save-mesa-plot}
+ggsave(
+  file.path(output_dir, "mesa_cmr_feature_hr.png"),
+  p_mesa,
+  width = 7,
+  height = 8,
+  dpi = 300
+)
+```

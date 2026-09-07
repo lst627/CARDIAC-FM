@@ -1,0 +1,121 @@
+---
+title: "Subgroup AUROC"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, fig.width = 8, fig.height = 5)
+
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(stringr)
+```
+
+```{r load-data}
+base_dir <- "/Users/fuminli/Desktop/CARDIAC-FM"
+subgroup_path <- file.path(base_dir, "figure_numbers_new", "supp_subgroups", "subgroups.csv")
+
+subgroups <- read_csv(subgroup_path, show_col_types = FALSE)
+
+arm_labels <- c(
+  "RiskScore" = "Risk Score",
+  "ECG-FM" = "ECG-FM",
+  "CL(ECG)" = "CARDIAC-FM (ECG)",
+  "CL(ECG+MRI)" = "CARDIAC-FM (ECG+MRI)",
+  "CL(ECG)+RS" = "CARDIAC-FM (ECG) + Risk Score",
+  "CL(ECG+MRI)+RS" = "CARDIAC-FM (ECG+MRI) + Risk Score"
+)
+
+arm_order <- c(
+  "CARDIAC-FM (ECG)",
+  "CARDIAC-FM (ECG) + Risk Score",
+  "CARDIAC-FM (ECG+MRI)",
+  "CARDIAC-FM (ECG+MRI) + Risk Score"
+)
+
+arm_colors <- c(
+  "CARDIAC-FM (ECG)" = "#D62728",
+  "CARDIAC-FM (ECG) + Risk Score" = "#1F77B4",
+  "CARDIAC-FM (ECG+MRI)" = "#FF7F0E",
+  "CARDIAC-FM (ECG+MRI) + Risk Score" = "#2CA02C"
+)
+
+subgroup_labels <- c(
+  "ALL" = "Overall",
+  "male" = "Male",
+  "female" = "Female",
+  "age>=65" = "Age >=65",
+  "age<65" = "Age <65",
+  "age>=75" = "Age >=75",
+  "age<75" = "Age <75"
+)
+
+outcome_labels <- c(
+  "af5" = "Atrial Fibrillation",
+  "hf5" = "Heart Failure"
+)
+
+plot_subgroup <- function(cohort_name, x_limits = c(0.55, 0.95)) {
+  plot_arms <- if (cohort_name == "UKBB") {
+    c("CL(ECG)", "CL(ECG)+RS", "CL(ECG+MRI)", "CL(ECG+MRI)+RS")
+  } else {
+    c("CL(ECG)", "CL(ECG)+RS")
+  }
+  legend_rows <- if (cohort_name == "UKBB") 2 else 1
+
+  cohort_data <- subgroups %>%
+    filter(cohort == cohort_name, arm %in% plot_arms) %>%
+    mutate(
+      arm_label = factor(arm_labels[arm], levels = arm_order),
+      subgroup_label = subgroup_labels[subgroup],
+      subgroup_label = factor(
+        subgroup_label,
+        levels = unique(subgroup_labels[c("ALL", "male", "female", "age>=75", "age<75", "age>=65", "age<65")])
+      ),
+      outcome_label = factor(outcome_labels[outcome], levels = outcome_labels[c("af5", "hf5")])
+    ) %>%
+    filter(!is.na(arm_label), !is.na(subgroup_label), !is.na(outcome_label))
+
+  ggplot(cohort_data, aes(x = auroc, y = subgroup_label, color = arm_label, shape = arm_label)) +
+    geom_errorbarh(
+      aes(xmin = lo, xmax = hi),
+      position = position_dodge(width = 0.72),
+      height = 0.22,
+      linewidth = 0.45
+    ) +
+    geom_point(position = position_dodge(width = 0.72), size = 2.6) +
+    facet_wrap(~outcome_label, nrow = 1) +
+    scale_color_manual(values = arm_colors, drop = TRUE) +
+    scale_shape_manual(values = c(16, 15, 17, 18), drop = TRUE) +
+    guides(
+      color = guide_legend(nrow = legend_rows),
+      shape = guide_legend(nrow = legend_rows)
+    ) +
+    coord_cartesian(xlim = x_limits) +
+    labs(x = "AUROC", y = NULL, color = NULL, shape = NULL) +
+    theme_bw(base_size = 20) +
+    theme(
+      axis.title.x = element_text(size = 14, face = "bold"),
+      axis.text.x = element_text(size = 14, face = "bold"),
+      axis.text.y = element_text(size = 14, face = "bold"),
+      strip.text = element_text(size = 14, face = "bold"),
+      legend.text = element_text(size = 14, face = "bold"),
+      legend.position = "top",
+      panel.grid.major.y = element_blank(),
+      panel.grid.minor = element_blank()
+    )
+}
+```
+
+```{r ukbb-subgroup, fig.width=9, fig.height=5.5}
+plot_subgroup("UKBB")
+```
+
+```{r chs-subgroup, fig.width=9, fig.height=5.5}
+plot_subgroup("CHS")
+```
+
+```{r mesa-subgroup, fig.width=9, fig.height=5}
+plot_subgroup("MESA")
+```

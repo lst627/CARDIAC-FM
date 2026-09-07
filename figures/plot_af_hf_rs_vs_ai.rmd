@@ -1,0 +1,264 @@
+---
+title: "Risk Score vs CARDIAC-FM + Risk Score"
+author: "Fumin Li"
+date: "`r Sys.Date()`"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(readr)
+library(tibble)
+library(stringr)
+library(jsonlite)
+
+base_dir <- "/Users/fuminli/Desktop/CARDIAC-FM/figure_numbers_new/fig3_external_zeroshot"
+json_file <- file.path(base_dir, "fig23_numbers_our3_ecgfm1.json")
+pval_file <- "/Users/fuminli/Desktop/CARDIAC-FM/figure_numbers_new/pval_vs_riskscore.json"
+out_dir <- file.path(base_dir, "plot_rs_vs_ai")
+dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
+
+`%||%` <- function(x, y) {
+  if (is.null(x)) y else x
+}
+
+fig_json <- fromJSON(json_file, simplifyVector = FALSE)
+pval_json <- fromJSON(pval_file, simplifyVector = FALSE)
+
+parse_fig23_json_metrics <- function(fig_json) {
+  rows <- list()
+
+  for (key in names(fig_json)) {
+    if (startsWith(key, "_")) next
+
+    key_parts <- str_split_fixed(key, "\\|", 2)
+    dataset_i <- key_parts[, 1]
+    label_i <- key_parts[, 2]
+    entry <- fig_json[[key]]
+    models_i <- unique(c(
+      names(entry$auroc$bars %||% list()),
+      names(entry$auprc$bars %||% list())
+    ))
+
+    for (model_i in models_i) {
+      auroc_i <- entry$auroc$bars[[model_i]]
+      auprc_i <- entry$auprc$bars[[model_i]]
+
+      rows[[length(rows) + 1]] <- tibble(
+        dataset = dataset_i,
+        label = label_i,
+        model = model_i,
+        n = entry$n,
+        pos = entry$pos,
+        neg = entry$neg,
+        auroc = auroc_i$point %||% NA_real_,
+        auroc_ci_lo = auroc_i$ci_lo %||% NA_real_,
+        auroc_ci_hi = auroc_i$ci_hi %||% NA_real_,
+        auprc = auprc_i$point %||% NA_real_,
+        auprc_ci_lo = auprc_i$ci_lo %||% NA_real_,
+        auprc_ci_hi = auprc_i$ci_hi %||% NA_real_
+      )
+    }
+  }
+
+  bind_rows(rows)
+}
+
+rs_models <- c(
+  "Risk Score",
+  "CARDIAC-FM (ECG) +RS",
+  "CARDIAC-FM (ECG+MRI) +RS"
+)
+
+model_labels <- c(
+  "Risk Score" = "Risk Score",
+  "CARDIAC-FM (ECG) +RS" = "CARDIAC-FM (ECG) + Risk Score",
+  "CARDIAC-FM (ECG+MRI) +RS" = "CARDIAC-FM (ECG+MRI) + Risk Score"
+)
+
+model_colors <- c(
+  "Risk Score" = "#B8A64B",
+  "CARDIAC-FM (ECG) +RS" = "#009E73",
+  "CARDIAC-FM (ECG+MRI) +RS" = "#56B4E9"
+)
+
+model_display_colors <- setNames(model_colors[names(model_labels)], model_labels)
+
+parse_pval_vs_riskscore <- function(pval_json) {
+  rows <- list()
+
+  for (key in names(pval_json)) {
+    key_parts <- str_split_fixed(key, "\\|", 3)
+    dataset_i <- key_parts[, 1]
+    label_i <- key_parts[, 2]
+    entry <- pval_json[[key]]
+
+    for (metric_i in c("auroc", "auprc")) {
+      pval_metric <- if (metric_i == "auroc") "roc" else "prc"
+      metric_entry <- entry[[pval_metric]]
+
+      rows[[length(rows) + 1]] <- tibble(
+        dataset = dataset_i,
+        label = label_i,
+        model = entry$model,
+        metric = metric_i,
+        delta_vs_risk_score = metric_entry$delta %||% NA_real_,
+        p_vs_risk_score = metric_entry$p %||% NA_real_,
+        sig_vs_risk_score = isTRUE(metric_entry$sig)
+      )
+    }
+  }
+
+  bind_rows(rows)
+}
+
+pval_table <- parse_pval_vs_riskscore(pval_json)
+
+metrics <- parse_fig23_json_metrics(fig_json) %>%
+  filter(model %in% rs_models) %>%
+  mutate(
+    dataset = factor(dataset, levels = c("UKB", "CHS", "MESA")),
+    label_display = factor(
+      recode(label, af5 = "AF", hf5 = "HF"),
+      levels = c("AF", "HF")
+    ),
+    model = factor(model, levels = rs_models),
+    model_display = factor(model_labels[as.character(model)], levels = model_labels[rs_models])
+  )
+
+write_csv(metrics, file.path(out_dir, "rs_vs_cardiacfm_plus_rs_metrics.csv"))
+write_csv(pval_table, file.path(out_dir, "rs_vs_cardiacfm_plus_rs_pval_vs_riskscore.csv"))
+
+make_metric_df <- function(df, metric_i) {
+  df %>%
+    transmute(
+      dataset,
+      label,
+      label_display,
+      model,
+      model_display,
+      value = .data[[metric_i]],
+      ci_lo = .data[[paste0(metric_i, "_ci_lo")]],
+      ci_hi = .data[[paste0(metric_i, "_ci_hi")]]
+    )
+}
+
+plot_dumbbell <- function(df, metric_i) {
+  point_df <- make_metric_df(df, metric_i) %>%
+    filter(!is.na(value)) %>%
+    left_join(
+      pval_table %>% filter(metric == metric_i),
+      by = c("dataset", "label", "model")
+    ) %>%
+    mutate(
+      dataset = factor(dataset, levels = c("UKB", "CHS", "MESA")),
+      model = factor(model, levels = rs_models),
+      sig_label = ifelse(coalesce(sig_vs_risk_score, FALSE), "*", "")
+    ) %>%
+    group_by(dataset, label_display) %>%
+    arrange(model, .by_group = TRUE) %>%
+    mutate(
+      model_index = row_number(),
+      n_models = n(),
+      x_base = as.numeric(label_display),
+      x_pos = x_base + (model_index - (n_models + 1) / 2) * 0.22
+    ) %>%
+    ungroup()
+
+  metric_label <- toupper(metric_i)
+  y_min <- min(point_df$ci_lo, na.rm = TRUE)
+  y_max <- max(point_df$ci_hi, na.rm = TRUE)
+  y_pad <- max(0.025, (y_max - y_min) * 0.18)
+  y_lower <- max(0, floor((y_min - y_pad) * 20) / 20)
+  y_upper <- min(1, ceiling((y_max + y_pad) * 20) / 20)
+
+  ggplot(point_df, aes(x = x_pos, y = value, color = model_display)) +
+    geom_errorbar(
+      aes(ymin = ci_lo, ymax = ci_hi),
+      width = 0.12,
+      linewidth = 0.55,
+      alpha = 0.95
+    ) +
+    geom_point(size = 3.2) +
+    geom_text(
+      aes(y = ci_hi + y_pad * 0.18, label = sig_label),
+      size = 6.5,
+      fontface = "bold",
+      color = "black",
+      vjust = 0,
+      na.rm = TRUE
+    ) +
+    facet_wrap(~ dataset, nrow = 1) +
+    scale_color_manual(values = model_display_colors, drop = FALSE) +
+    scale_x_continuous(
+      breaks = seq_along(levels(point_df$label_display)),
+      labels = levels(point_df$label_display),
+      limits = c(0.55, length(levels(point_df$label_display)) + 0.45),
+      expand = expansion(mult = c(0, 0))
+    ) +
+    scale_y_continuous(
+      breaks = seq(0, 1, 0.05),
+      expand = expansion(mult = c(0.01, 0.05))
+    ) +
+    coord_cartesian(ylim = c(y_lower, y_upper)) +
+    labs(
+      x = NULL,
+      y = metric_label,
+      color = NULL,
+      caption = "* CARDIAC-FM + Risk Score significantly outperformed Risk Score\n(paired bootstrap p<0.05)."
+    ) +
+    guides(color = guide_legend(nrow = 1, byrow = TRUE)) +
+    theme_classic(base_size = 18) +
+    theme(
+      legend.position = "top",
+      legend.justification = "center",
+      legend.text = element_text(face = "bold", size = 11),
+      legend.key.size = unit(0.35, "cm"),
+      legend.spacing.x = unit(0.1, "cm"),
+      legend.margin = margin(b = 4),
+      strip.background = element_blank(),
+      strip.text = element_text(size = 18, face = "bold", color = "black"),
+      axis.text.x = element_text(size = 16, color = "black", face = "bold"),
+      axis.text.y = element_text(size = 16, color = "black", face = "bold"),
+      axis.title.y = element_text(size = 18, color = "black", face = "bold"),
+      panel.grid.major.y = element_line(color = "#E2E6EC", linewidth = 0.5),
+      panel.grid.minor = element_blank(),
+      plot.caption = element_text(size = 14, hjust = 0.5, margin = margin(t = 12), face = "bold"),
+      plot.margin = margin(10, 24, 24, 46)
+    )
+}
+
+save_plot <- function(p, name, width = 10.2, height = 5.2) {
+  ggsave(file.path(out_dir, paste0(name, ".pdf")), p, width = width, height = height, device = cairo_pdf)
+  ggsave(file.path(out_dir, paste0(name, ".png")), p, width = width, height = height, dpi = 300)
+}
+```
+
+```{r}
+all_plots <- list()
+
+for (metric_i in c("auroc", "auprc")) {
+  p_abs <- plot_dumbbell(metrics, metric_i)
+
+  all_plots[[paste0(metric_i, "_absolute")]] <- p_abs
+
+  save_plot(p_abs, paste0("rs_vs_cardiacfm_plus_rs_", metric_i, "_dumbbell"))
+}
+
+length(all_plots)
+```
+
+```{r, fig.width=9.2, fig.height=4.8}
+all_plots$auroc_absolute
+```
+
+```{r, fig.width=9.2, fig.height=4.8}
+all_plots$auprc_absolute
+```
